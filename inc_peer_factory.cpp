@@ -116,7 +116,7 @@ void inc_peer_factory::thread_accept()
 		std::cout << "ACCEPTED" << std::endl;
 		
 		std::thread create_peer_thread = std::thread([&](int _peer_fd, sockaddr_in6 _saddr) 
-		{this->thread_create_peer(_peer_fd, _saddr); }, peer_fd, tmpaddr);
+		{this->thread_create_peer(_peer_fd, &_saddr); }, peer_fd, tmpaddr);
 		if (create_peer_thread.joinable()) create_peer_thread.detach();
 	}
 
@@ -125,10 +125,10 @@ void inc_peer_factory::thread_accept()
 		thread_accept();
 }
 
-void inc_peer_factory::thread_create_peer(int peer_fd, sockaddr_in6 saddr)
+void inc_peer_factory::thread_create_peer(int peer_fd, sockaddr_in6 *saddr)
 {
 	//TO DO STORE IT SOMWHERE
-	new peer(peer_fd, &saddr);
+	new peer(peer_fd, saddr);
 }
 
 

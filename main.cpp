@@ -13,14 +13,15 @@
 
 #include <cstdlib>
 #include <unistd.h>
+#include <time.h>
 #include "inc_peer_factory.h"
 #include "out_peer_factory.h"
 
 //using namespace std;
 
 int main()
-{
-
+{	
+	srand(std::time(NULL));
 	wsock_init();
 	
 	//TODO REMOVE INPUTS PASSED AT START

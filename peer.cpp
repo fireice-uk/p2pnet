@@ -14,8 +14,12 @@
 #include "peer.h"
 
 
-peer::peer(SOCKET _peer_fd, const sockaddr_in *addr) : peer_fd(_peer_fd), addr4(*addr)
-{
+peer::peer(SOCKET _peer_fd, const sockaddr_in *addr) : peer_fd(_peer_fd)
+{	
+  
+    memcpy(&ip4_addr, addr, sizeof(sockaddr_in));
+    memset(&ip6_addr, 0, sizeof(sockaddr_in6));
+    
     t_send = std::thread([&]() {this->send_thread(); });
     t_recv = std::thread([&]() {this->recv_thread(); });
 
@@ -23,8 +27,11 @@ peer::peer(SOCKET _peer_fd, const sockaddr_in *addr) : peer_fd(_peer_fd), addr4(
     if (t_recv.joinable()) t_recv.detach();
 }
 
-peer::peer(SOCKET _peer_fd, const sockaddr_in6 *addr) : peer_fd(_peer_fd), addr6(*addr)
+peer::peer(SOCKET _peer_fd, const sockaddr_in6 *addr) : peer_fd(_peer_fd)
 {
+    memcpy(&ip6_addr, addr, sizeof(sockaddr_in6));
+    memset(&ip4_addr, 0, sizeof(sockaddr_in));
+  
     t_send = std::thread([&]() {this->send_thread(); });
     t_recv = std::thread([&]() {this->recv_thread(); });
 

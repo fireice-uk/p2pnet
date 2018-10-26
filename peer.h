@@ -113,8 +113,8 @@ protected:
 	//REFACTORING
 	bool quit = false;
 	SOCKET peer_fd;
-	sockaddr_in addr4;
-	sockaddr_in6 addr6;
+	sockaddr_in ip4_addr;
+	sockaddr_in6 ip6_addr;
 	std::thread t_send;
 	std::thread t_recv;
 	std::queue<char*> send_data;

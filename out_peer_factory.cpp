@@ -18,61 +18,8 @@ out_peer_factory::out_peer_factory()
 	//CHECK FOR ERROR
 }
 
-void out_peer_factory::thread_connect(const char *saddr, uint16_t  port)
-{	
-	sockaddr_in6 _addr6 = { 0 };
-	sockaddr_in _addr4 = { 0 };
-	
-	SOCKET peer_fd = INVALID_SOCKET;
-	
-	if (inet_pton(AF_INET, saddr, &(_addr4.sin_addr)) == 1)
-	{
-		_addr4.sin_family = AF_INET;
-		_addr4.sin_port = htons(port);
-		
-		peer_fd = connect(_addr4);
-		if(peer_fd != INVALID_SOCKET)
-		{
-			std::cout << "CONNECTED" << std::endl;
-			peer *p1 = new peer(peer_fd, &_addr4);
-				      
-			//TEST
-			char *s = (char*)"TEST MESSAGE";
-			p1->add_send_data(s, strlen(s));
-		}
-		else
-		{
-		      std::cout << "CAN NOT CONNECT TO: " << saddr << " : " << port << std::endl;
-		}
-	}
-	else if (inet_pton(AF_INET6, saddr, &(_addr6.sin6_addr)) == 1)
-	{
-		_addr6.sin6_family = AF_INET6;
-		_addr6.sin6_port = htons(port);
-			
-		peer_fd = connect(_addr6); 
-		if(peer_fd != INVALID_SOCKET)
-		{
-		      std::cout << "CONNECTED" << std::endl;
-		      peer *p1 = new peer(peer_fd, &_addr6);
-				      
-		      //TEST
-		      char *s = (char*)"TEST MESSAGE";
-		      p1->add_send_data(s, strlen(s));
-		}
-		else
-		{
-		      std::cout << "CAN NOT CONNECT TO: " << saddr << " : " << port << std::endl;
-		}
-	}
-	else
-	{
-		std::cout << "GIVEN ADDRESS IS NEITHER IPV4 OR IPV6 - OUT PEER FAC" << std::endl;
-	}
-}
-
-void out_peer_factory::thread_connect(const char *full_addr)
-{	
+void out_peer_factory::connect(const char* full_addr)
+{
 	SOCKET peer_fd = INVALID_SOCKET;
 	
 	//RESOLVE DNS
@@ -141,42 +88,35 @@ void out_peer_factory::thread_connect(const char *full_addr)
 			}
 			else
 			{
-			    //TODO CONNECT IN RANDOM ORDER
-			    int n = 0;
-			    while ((peer_fd == INVALID_SOCKET) && (addr.size() > n))
-			    {
-				    peer_fd = connect(addr[n]);
-				    if(peer_fd != INVALID_SOCKET)
-				    {
-				      std::cout << "CONNECTED" << std::endl;
-				      peer *p1 = new peer(peer_fd, &addr[n]);
-				      
-				      //TEST
-				      char *s = (char*)"TEST MESSAGE";
-				      p1->add_send_data(s, strlen(s));
-				      break;
-				    }
-				    n++;
+			    if(!addr.empty())
+			    {	
+				int n = rand() % addr.size();
+				peer_fd = connect(addr[n]);
+				if(peer_fd != INVALID_SOCKET)
+				{
+					std::cout << "CONNECTED" << std::endl;
+					peer *p1 = new peer(peer_fd, &addr[n]);
+	
+					 //TEST
+					 char *s = (char*)"TEST MESSAGE";
+					 p1->add_send_data(s, strlen(s));
+				}
 			    }
 			    
-			    if(peer_fd == INVALID_SOCKET && !addr6.empty())
-			    {
-				    n = 0;				 
-				    while ( (peer_fd == INVALID_SOCKET) && (addr6.size() > n))
-				    {
-					    peer_fd = connect(addr6[n]);
-					    if(peer_fd != INVALID_SOCKET)
-					    {
-					      std::cout << "CONNECTED" << std::endl;
-					      peer *p1 = new peer(peer_fd, &addr6[n]);
-					      
-					      //TEST
-					      char *s = (char*)"TEST MESSAGE";
-					      p1->add_send_data(s, strlen(s));
-					      break;
-					    }
-					    n++;
-				    }
+			    
+			    else if(!addr6.empty())
+			    {	
+				int n = rand() % addr6.size();
+				peer_fd = connect(addr6[n]);
+				if(peer_fd != INVALID_SOCKET)
+				{
+					std::cout << "CONNECTED" << std::endl;
+					peer *p1 = new peer(peer_fd, &addr6[n]);
+	
+					 //TEST
+					 char *s = (char*)"TEST MESSAGE";
+					 p1->add_send_data(s, strlen(s));
+				}
 			    }
 			    
 			    if (peer_fd == INVALID_SOCKET)
@@ -191,19 +131,57 @@ void out_peer_factory::thread_connect(const char *full_addr)
 	}
 }
 
-void out_peer_factory::connect(const char* dns)
-{
-	//std::thread t1 = std::thread([&](const char *_dns) {this->thread_connect(_dns); }, dns);
-	//if (t1.joinable()) t1.detach();
-  
-	thread_connect(dns);
-}
-
 void out_peer_factory::connect(const char *saddr, uint16_t port)
 {
-	//std::thread t1 = std::thread([&](const char *_saddr, uint16_t  _port) {this->thread_connect(_saddr, _port); }, saddr, port);
-	//if(t1.joinable()) t1.detach();
-	thread_connect(saddr, port);
+	sockaddr_in6 _addr6 = { 0 };
+	sockaddr_in _addr4 = { 0 };
+	
+	SOCKET peer_fd = INVALID_SOCKET;
+	
+	if (inet_pton(AF_INET, saddr, &(_addr4.sin_addr)) == 1)
+	{
+		_addr4.sin_family = AF_INET;
+		_addr4.sin_port = htons(port);
+		
+		peer_fd = connect(_addr4);
+		if(peer_fd != INVALID_SOCKET)
+		{
+			std::cout << "CONNECTED" << std::endl;
+			peer *p1 = new peer(peer_fd, &_addr4);
+				      
+			//TEST
+			char *s = (char*)"TEST MESSAGE";
+			p1->add_send_data(s, strlen(s));
+		}
+		else
+		{
+		      std::cout << "CAN NOT CONNECT TO: " << saddr << " : " << port << std::endl;
+		}
+	}
+	else if (inet_pton(AF_INET6, saddr, &(_addr6.sin6_addr)) == 1)
+	{
+		_addr6.sin6_family = AF_INET6;
+		_addr6.sin6_port = htons(port);
+			
+		peer_fd = connect(_addr6); 
+		if(peer_fd != INVALID_SOCKET)
+		{
+		      std::cout << "CONNECTED" << std::endl;
+		      peer *p1 = new peer(peer_fd, &_addr6);
+				      
+		      //TEST
+		      char *s = (char*)"TEST MESSAGE";
+		      p1->add_send_data(s, strlen(s));
+		}
+		else
+		{
+		      std::cout << "CAN NOT CONNECT TO: " << saddr << " : " << port << std::endl;
+		}
+	}
+	else
+	{
+		std::cout << "GIVEN ADDRESS IS NEITHER IPV4 OR IPV6 - OUT PEER FAC" << std::endl;
+	}
 }
 
 SOCKET out_peer_factory::connect(sockaddr_in addr)

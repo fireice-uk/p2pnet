@@ -38,7 +38,7 @@ protected:
 	bool _stop = false; 
 	void call_listen(const char *saddr = nullptr, uint16_t port = 0, int backlog = 10);
 	void thread_accept();
-	void thread_create_peer(int peer_fd, sockaddr_in6 saddr);
+	void thread_create_peer(int peer_fd, sockaddr_in6 *saddr);
 
 private:
 };

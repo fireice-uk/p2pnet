@@ -19,6 +19,8 @@ cstdlib
 -
 unistd.h
 -
+time.h
+-
 inc_peer_factory.h
 /home/benqgg/projects/p2pnet/inc_peer_factory.h
 out_peer_factory.h

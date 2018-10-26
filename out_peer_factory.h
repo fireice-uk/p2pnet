@@ -25,16 +25,13 @@ public:
 	
 	//REFACTORING
 	out_peer_factory();
-	static void connect(const char* dns);
+	static void connect(const char* full_addr);
 	static void connect(const char *saddr, uint16_t port);
 	static SOCKET connect(sockaddr_in addr);
 	static SOCKET  connect(sockaddr_in6 addr);
 	
 protected:
       
-	//REFACTORING
-	static void thread_connect(const char *saddr, uint16_t port);
-	static void thread_connect(const char *dns);
 	
 private:
 };
