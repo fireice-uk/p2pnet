@@ -21,19 +21,28 @@
 
 class out_peer_factory
 {
+private:
+	struct sock_data
+	{
+		SOCKET sock;
+		sockaddr_in addr4;
+		sockaddr_in6 addr6;
+		bool ip4;
+	};
+
 public:
 	
 	//REFACTORING
 	out_peer_factory();
-	static SOCKET connect(const char* full_addr);
-	static SOCKET connect(const char *saddr, uint16_t port);
-	static SOCKET connect(sockaddr_in addr);
-	static SOCKET  connect(sockaddr_in6 addr);
+	static void connect(sock_data& out, const char* full_addr);
+	static void connect(sock_data& out, const char *saddr, uint16_t port);
+	static void connect(sock_data& out, sockaddr_in addr);
+	static void connect(sock_data& out, sockaddr_in6 addr);
 	
-	void connect_peers(size_t n) {}
+	void connect_peers(size_t n);
 	
 protected:
-      
+
 	std::vector<peer> peers;
 private:
 };

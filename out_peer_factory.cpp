@@ -18,7 +18,7 @@ out_peer_factory::out_peer_factory()
 	//CHECK FOR ERROR
 }
 
-SOCKET out_peer_factory::connect(const char* full_addr)
+void out_peer_factory::connect(sock_data& out, const char* full_addr)
 {
 	SOCKET peer_fd = INVALID_SOCKET;
 	
@@ -113,7 +113,7 @@ SOCKET out_peer_factory::connect(const char* full_addr)
 	return peer_fd;
 }
 
-SOCKET out_peer_factory::connect(const char *saddr, uint16_t port)
+void out_peer_factory::connect(sock_data& out, const char *saddr, uint16_t port)
 {
 	sockaddr_in6 _addr6 = { 0 };
 	sockaddr_in _addr4 = { 0 };
@@ -150,7 +150,7 @@ SOCKET out_peer_factory::connect(const char *saddr, uint16_t port)
 	return peer_fd;
 }
 
-SOCKET out_peer_factory::connect(sockaddr_in addr)
+void out_peer_factory::connect(sock_data& out, sockaddr_in addr)
 {
      SOCKET peer_fd = socket(PF_INET, SOCK_STREAM, 0);
      
@@ -172,7 +172,7 @@ SOCKET out_peer_factory::connect(sockaddr_in addr)
      return INVALID_SOCKET;
 }
 
-SOCKET out_peer_factory::connect(sockaddr_in6 addr)
+void out_peer_factory::connect(sock_data& out, sockaddr_in6 addr)
 {
      SOCKET peer_fd = socket(PF_INET6, SOCK_STREAM, 0);
      
@@ -192,4 +192,17 @@ SOCKET out_peer_factory::connect(sockaddr_in6 addr)
      }
      
      return INVALID_SOCKET;
+}
+
+void out_peer_factory::connect_peers(size_t n)
+{
+	sock_data s;
+	connect(s, "localhost:1111");
+	if(s.sock != INVALID_SOCKET)
+	{
+		if(s.ip4)
+			peers.emplace_back(s.sock, s.addr4);
+		else
+			peers.emplace_back(s.sock, s.addr6);
+	}
 }
