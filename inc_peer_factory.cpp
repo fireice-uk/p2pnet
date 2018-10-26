@@ -13,18 +13,16 @@
 
 #include "inc_peer_factory.h"
 
-inc_peer_factory::inc_peer_factory(const char *saddr, uint16_t port, int backlog)
+inc_peer_factory::inc_peer_factory()
 {
-	std::thread t1 = std::thread([&](const char *_saddr, uint16_t _port, int _backlog) {this->call_listen(_saddr, _port, _backlog); }, saddr, port, backlog);
-	if (t1.joinable()) t1.detach();
 }
 
 inc_peer_factory::~inc_peer_factory()
 {
-
+	stop();
 }
 
-void inc_peer_factory::call_listen(const char *saddr, uint16_t port, int backlog)
+void inc_peer_factory::start(const char *saddr, uint16_t port, int backlog)
 {	
 	int domain;
 
@@ -86,10 +84,8 @@ void inc_peer_factory::call_listen(const char *saddr, uint16_t port, int backlog
 				inet_ntop(AF_INET, &(laddr6.sin6_addr), ipstr, INET6_ADDRSTRLEN);
                                 getsockname(listen_fd, (sockaddr*)&laddr6, &tmplen);
 				std::cout << "LISTENING ON: INTERFACE: " << ipstr << " : PORT: " << ntohs(laddr6.sin6_port) << std::endl;
-				
-				
-				accept_thread = std::thread([&]() {this->thread_accept(); });
-				if (accept_thread.joinable()) accept_thread.detach();
+	
+				accept_thread = std::thread(&inc_peer_factory::thread_accept, this);
 			}
 			else
 			{
@@ -104,25 +100,23 @@ void inc_peer_factory::thread_accept()
 {
 	std::cout << "Waitng for peer" << std::endl;
 	
-	sockaddr_in6 tmpaddr = { 0 }; 
-	socklen_t tmpsize = sizeof(tmpaddr);
-	SOCKET peer_fd = accept(listen_fd, (sockaddr*)&tmpaddr, &tmpsize);
-	if ( peer_fd == INVALID_SOCKET)
+	while(true)
 	{
-		std::cout << "CAN NOT ACCEPT - INC PEER FAC" << std::endl;
-	}
-	else
-	{
+		sockaddr_in6 tmpaddr = { 0 }; 
+		socklen_t tmpsize = sizeof(tmpaddr);
+		SOCKET peer_fd = accept(listen_fd, (sockaddr*)&tmpaddr, &tmpsize);
+		if ( peer_fd == INVALID_SOCKET)
+		{
+			std::cout << "CAN NOT ACCEPT - INC PEER FAC" << std::endl;
+			break;
+		}
+
 		std::cout << "ACCEPTED" << std::endl;
-		
+			
 		std::thread create_peer_thread = std::thread([&](int _peer_fd, sockaddr_in6 _saddr) 
 		{this->thread_create_peer(_peer_fd, &_saddr); }, peer_fd, tmpaddr);
 		if (create_peer_thread.joinable()) create_peer_thread.detach();
 	}
-
-
-	if (!_stop)
-		thread_accept();
 }
 
 void inc_peer_factory::thread_create_peer(int peer_fd, sockaddr_in6 *saddr)
@@ -131,9 +125,14 @@ void inc_peer_factory::thread_create_peer(int peer_fd, sockaddr_in6 *saddr)
 	new peer(peer_fd, saddr);
 }
 
-
 void inc_peer_factory::stop()
 {
-	_stop = true;
-	close(listen_fd);
+	if(listen_fd != INVALID_SOCKET)
+	{
+		close(listen_fd);
+		listen_fd = INVALID_SOCKET;
+	}
+
+	if(accept_thread.joinable())
+		accept_thread.join();
 }
