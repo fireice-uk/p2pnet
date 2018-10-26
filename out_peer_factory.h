@@ -25,10 +25,12 @@ public:
 	
 	//REFACTORING
 	out_peer_factory();
-	static void connect(const char* full_addr);
-	static void connect(const char *saddr, uint16_t port);
+	static SOCKET connect(const char* full_addr);
+	static SOCKET connect(const char *saddr, uint16_t port);
 	static SOCKET connect(sockaddr_in addr);
 	static SOCKET  connect(sockaddr_in6 addr);
+	
+	void connect_peers(size_t n) {}
 	
 protected:
       

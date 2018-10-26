@@ -18,7 +18,7 @@ out_peer_factory::out_peer_factory()
 	//CHECK FOR ERROR
 }
 
-void out_peer_factory::connect(const char* full_addr)
+SOCKET out_peer_factory::connect(const char* full_addr)
 {
 	SOCKET peer_fd = INVALID_SOCKET;
 	
@@ -129,9 +129,11 @@ void out_peer_factory::connect(const char* full_addr)
 			}
 		}
 	}
+	
+	return peer_fd;
 }
 
-void out_peer_factory::connect(const char *saddr, uint16_t port)
+SOCKET out_peer_factory::connect(const char *saddr, uint16_t port)
 {
 	sockaddr_in6 _addr6 = { 0 };
 	sockaddr_in _addr4 = { 0 };
@@ -182,6 +184,8 @@ void out_peer_factory::connect(const char *saddr, uint16_t port)
 	{
 		std::cout << "GIVEN ADDRESS IS NEITHER IPV4 OR IPV6 - OUT PEER FAC" << std::endl;
 	}
+	
+	return peer_fd;
 }
 
 SOCKET out_peer_factory::connect(sockaddr_in addr)
