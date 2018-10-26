@@ -13,125 +13,83 @@
 
 #include "peer.h"
 
-
 peer::peer(SOCKET _peer_fd, const sockaddr_in *addr) : peer_fd(_peer_fd)
-{	
-  
-    memcpy(&ip4_addr, addr, sizeof(sockaddr_in));
-    memset(&ip6_addr, 0, sizeof(sockaddr_in6));
+{
+	memcpy(&ip4_addr, addr, sizeof(sockaddr_in));
+	memset(&ip6_addr, 0, sizeof(sockaddr_in6));
     
-    t_send = std::thread(&peer::send_thread, this);
-    t_recv = std::thread(&peer::recv_thread, this);
+	t_send = std::thread(&peer::send_thread, this);
+	t_recv = std::thread(&peer::recv_thread, this);
 }
 
 peer::peer(SOCKET _peer_fd, const sockaddr_in6 *addr) : peer_fd(_peer_fd)
 {
-    memcpy(&ip6_addr, addr, sizeof(sockaddr_in6));
-    memset(&ip4_addr, 0, sizeof(sockaddr_in));
-  
-    t_send = std::thread([&]() {this->send_thread(); });
-    t_recv = std::thread([&]() {this->recv_thread(); });
-
-    if (t_send.joinable()) t_send.detach();
-    if (t_recv.joinable()) t_recv.detach();
+	memcpy(&ip6_addr, addr, sizeof(sockaddr_in6));
+	memset(&ip4_addr, 0, sizeof(sockaddr_in));
+    
+	t_send = std::thread(&peer::send_thread, this);
+	t_recv = std::thread(&peer::recv_thread, this);
 }
 
 void peer::send_thread()
 {
-	//TODO SEND DATA
-
-	while (peer_fd != INVALID_SOCKET)
+	while(sendq.wait_for_pop())
 	{
-		if (!send_data.empty())
+		std::vector<uint8_t> data = sendq.pop();
+		
+		if(peer_fd == INVALID_SOCKET)
+			return;
+
+		size_t sent = 0;
+		while(sent < data.size())
 		{
-			send_mutex.lock();
+			int sdlen = send(peer_fd, (char*)(&data.front()+sent), data.size()-sent, 0);
 
-			int len, sdlen;
-			char *buff = send_data.front();
-
-			memcpy(&len, buff, sizeof(len));
-
-			sdlen =  send(peer_fd, buff, (len + sizeof(len)), 0);
-
-			while(sdlen < len+sizeof(len))
+			if(sdlen <= 0)
 			{
-			  //TODO SOME DATA LEFT UNSEND
-			  sdlen += send(peer_fd, (char*)buff[sdlen], (len + sizeof(len) - sdlen), 0);
+				peer_fd = INVALID_SOCKET;
+				return;
 			}
-			send_data.pop();
 
-			send_mutex.unlock();
+			sent += sdlen;
 		}
 	}
 }
 
 void peer::recv_thread()
 {
-	//TODO RECV DATA
-	int reclen;
-	char buffer[1024];
+	constexpr size_t buflen = 256 * 1024;
+	std::unique_ptr<uint8_t[]> buffer(new uint8_t[buflen]);
+	size_t bufpos = 0;
+
 	while (peer_fd != INVALID_SOCKET)
 	{
-		reclen = recv(peer_fd, buffer, 1024, 0);
-		if (reclen > 0)
-		{
-			recv_mutex.lock();
+		int reclen = recv(peer_fd, (char*)buffer.get()+bufpos, buflen-bufpos, 0);
 
-			char* tmpbuffer = new char[reclen];
-
-			memcpy(tmpbuffer, buffer, reclen);
-			recv_data.push(tmpbuffer);
-
-			//EXAMPLE TO DISPLAY AND DISPATCH DATA
-			char *readbuffer = recv_data.back();
-			int readlen;
-			memcpy(&readlen, readbuffer, sizeof(readlen));
-			char *readdata = new char[readlen+1];
-			memcpy(readdata, &readbuffer[sizeof(readlen)], readlen);
-			readdata[readlen] = '\0';
-			std::cout << "RECEIVED DATA: " << readdata << " LENGTH: " << readlen << std::endl;
-			//END OF EXAMPLE
-
-			recv_mutex.unlock();
-		}
-		else if (reclen == 0)
+		if (reclen == 0)
 		{
 			//CONNECTION LOST
 			std::cout << "PEER: " << peer_fd << " DISCONNECTED" << std::endl;
+			peer_fd = INVALID_SOCKET;
+			break;
 		}
-		else
+		else if(reclen < 0)
 		{
 			//ERROR
 			std::cout << "RECV ERROR - PEER: " << peer_fd << std::endl;
+			peer_fd = INVALID_SOCKET;
+			break;
 		}
+
+		std::cout << "RECEIVED DATA: " << (char*)buffer.get() << " LENGTH: " << reclen << std::endl;
 	}
 }
 
-void peer::add_send_data(const char *data, int len)
-{	
-	
-	std::thread t1 = std::thread([&](const char *_data, int _len) {this->add_send_data_thread(_data, _len); }, data, len);
-	if (t1.joinable()) t1.detach();
-}
-
-void peer::add_send_data_thread(const char *data, int len)
-{
-	send_mutex.lock();
-
-	char *buff = new char[len + sizeof(len)];
-
-	memcpy(buff, &len, sizeof(len)); //PASS DATA LENGTH SO WE DON NEED TO STORY IT EXTERNALLY
-	memcpy(&buff[sizeof(len)], data, len); //PASS DATA
-
-	send_data.push(buff);
-
-	send_mutex.unlock();
-}
-
 void peer::close()
-{	
-      ::close(peer_fd);
-      peer_fd = INVALID_SOCKET;
-      if (t_send.joinable()) t_send.join();
-      if (t_recv.joinable()) t_recv.join();
+{
+	::close(peer_fd);
+	sendq.set_finish_flag();
+	peer_fd = INVALID_SOCKET;
+	if (t_send.joinable()) t_send.join();
+	if (t_recv.joinable()) t_recv.join();
 }
