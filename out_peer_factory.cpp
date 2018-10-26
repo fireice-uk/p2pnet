@@ -20,7 +20,7 @@ out_peer_factory::out_peer_factory()
 
 void out_peer_factory::connect(sock_data& out, const char* full_addr)
 {
-	SOCKET peer_fd = INVALID_SOCKET;
+	SOCKET res = INVALID_SOCKET;
 	
 	//RESOLVE DNS
 	char _addr[256];
@@ -91,8 +91,8 @@ void out_peer_factory::connect(sock_data& out, const char* full_addr)
 			    if(!addr.empty())
 			    {	
 				int n = rand() % addr.size();
-				peer_fd = connect(addr[n]);
-				if(peer_fd == INVALID_SOCKET)
+				res = connect(out, addr[n]);
+				if(res == INVALID_SOCKET)
 				{
 					std::cout << "CAN NOT CONNECT TO: " << _addr << " : " << _port << std::endl;
 				}
@@ -100,8 +100,8 @@ void out_peer_factory::connect(sock_data& out, const char* full_addr)
 			    else if(!addr6.empty())
 			    {	
 				int n = rand() % addr6.size();
-				peer_fd = connect(addr6[n]);
-				if(peer_fd == INVALID_SOCKET)
+				res = connect(out, addr6[n]);
+				if(res == INVALID_SOCKET)
 				{
 					std::cout << "CAN NOT CONNECT TO: " << _addr << " : " << _port << std::endl;
 				}
@@ -109,8 +109,6 @@ void out_peer_factory::connect(sock_data& out, const char* full_addr)
 			}
 		}
 	}
-	
-	return peer_fd;
 }
 
 void out_peer_factory::connect(sock_data& out, const char *saddr, uint16_t port)
@@ -118,15 +116,15 @@ void out_peer_factory::connect(sock_data& out, const char *saddr, uint16_t port)
 	sockaddr_in6 _addr6 = { 0 };
 	sockaddr_in _addr4 = { 0 };
 	
-	SOCKET peer_fd = INVALID_SOCKET;
+	SOCKET res = INVALID_SOCKET;
 	
 	if (inet_pton(AF_INET, saddr, &(_addr4.sin_addr)) == 1)
 	{
 		_addr4.sin_family = AF_INET;
 		_addr4.sin_port = htons(port);
 		
-		peer_fd = connect(_addr4);
-		if(peer_fd == INVALID_SOCKET)
+		res = connect(out, _addr4);
+		if(res == INVALID_SOCKET)
 		{
 		      std::cout << "CAN NOT CONNECT TO: " << saddr << " : " << port << std::endl;
 		}
@@ -136,8 +134,8 @@ void out_peer_factory::connect(sock_data& out, const char *saddr, uint16_t port)
 		_addr6.sin6_family = AF_INET6;
 		_addr6.sin6_port = htons(port);
 			
-		peer_fd = connect(_addr6); 
-		if(peer_fd == INVALID_SOCKET)
+		res = connect(out, _addr6); 
+		if(res == INVALID_SOCKET)
 		{
 		      std::cout << "CAN NOT CONNECT TO: " << saddr << " : " << port << std::endl;
 		}
@@ -146,8 +144,6 @@ void out_peer_factory::connect(sock_data& out, const char *saddr, uint16_t port)
 	{
 		std::cout << "GIVEN ADDRESS IS NEITHER IPV4 OR IPV6 - OUT PEER FAC" << std::endl;
 	}
-	
-	return peer_fd;
 }
 
 void out_peer_factory::connect(sock_data& out, sockaddr_in addr)
@@ -163,13 +159,11 @@ void out_peer_factory::connect(sock_data& out, sockaddr_in addr)
 	if(::connect(peer_fd, (sockaddr*)&addr, sizeof(sockaddr_in)) == 0)
 	{
 	      std::cout << "CONNECTED" << std::endl;
-	      peers.emplace_back(peer_fd, &addr);
-	      
-	      return peer_fd;
+	      out.ip4 = true;
+	      out.addr4 = addr;
+	      out.sock = peer_fd;
 	}
      }
-     
-     return INVALID_SOCKET;
 }
 
 void out_peer_factory::connect(sock_data& out, sockaddr_in6 addr)
@@ -185,13 +179,11 @@ void out_peer_factory::connect(sock_data& out, sockaddr_in6 addr)
 	if(::connect(peer_fd, (sockaddr*)&addr, sizeof(sockaddr_in6)) == 0)
 	{
 	     std::cout << "CONNECTED" << std::endl;
-	     peers.emplace_back(peer_fd, &addr);
-	     
-	     return peer_fd;
+	     out.ip4 = false;
+	     out.addr6 = addr;
+	     out.sock = peer_fd;
 	}
      }
-     
-     return INVALID_SOCKET;
 }
 
 void out_peer_factory::connect_peers(size_t n)

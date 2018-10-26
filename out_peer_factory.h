@@ -24,7 +24,7 @@ class out_peer_factory
 private:
 	struct sock_data
 	{
-		SOCKET sock;
+		SOCKET sock = INVALID_SOCKET;
 		sockaddr_in addr4;
 		sockaddr_in6 addr6;
 		bool ip4;
@@ -44,7 +44,6 @@ public:
 protected:
 
 	std::vector<peer> peers;
-private:
 };
 
 #endif /* OUT_PEER_FACTORY_H */
