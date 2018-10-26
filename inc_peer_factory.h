@@ -24,23 +24,22 @@ class inc_peer_factory
 public:
 	
 	//Refactoring
-	inc_peer_factory(const char *saddr = nullptr, uint16_t port = 0, int backlog = 10);
+	inc_peer_factory();
 	~inc_peer_factory();
-	inline void join_accept_thread() { if (accept_thread.joinable()) accept_thread.join(); };
+	void start(const char *saddr = nullptr, uint16_t port = 0, int backlog = 10);
 	void stop();
 
 
 protected:
-  
 	//Refactoring
-	SOCKET listen_fd;
+	SOCKET listen_fd = INVALID_SOCKET;
 	std::thread accept_thread;
-	bool _stop = false; 
-	void call_listen(const char *saddr = nullptr, uint16_t port = 0, int backlog = 10);
+
 	void thread_accept();
 	void thread_create_peer(int peer_fd, sockaddr_in6 *saddr);
 
 private:
+	
 };
 
 #endif /* INC_PEER_FACOTRY_H */

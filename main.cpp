@@ -38,7 +38,8 @@ int main()
 	int port;
 	std::cout << "Listen Port: ";
 	std::cin >> port;
-	inc_peer_factory incfac(interptr, port);
+	inc_peer_factory incfac;
+	incfac.start(interptr, port);
 	
 	sleep(1);
 	std::cin.ignore(1024, '\n');
