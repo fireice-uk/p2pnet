@@ -15,6 +15,7 @@
 
 inc_peer_factory::inc_peer_factory()
 {
+  
 }
 
 inc_peer_factory::~inc_peer_factory()
@@ -100,7 +101,7 @@ void inc_peer_factory::thread_accept()
 {
 	std::cout << "Waitng for peer" << std::endl;
 	
-	while(true)
+	while(listen_fd != INVALID_SOCKET)
 	{
 		sockaddr_in6 tmpaddr = { 0 }; 
 		socklen_t tmpsize = sizeof(tmpaddr);
@@ -108,21 +109,14 @@ void inc_peer_factory::thread_accept()
 		if ( peer_fd == INVALID_SOCKET)
 		{
 			std::cout << "CAN NOT ACCEPT - INC PEER FAC" << std::endl;
-			break;
-		}
-
-		std::cout << "ACCEPTED" << std::endl;
 			
-		std::thread create_peer_thread = std::thread([&](int _peer_fd, sockaddr_in6 _saddr) 
-		{this->thread_create_peer(_peer_fd, &_saddr); }, peer_fd, tmpaddr);
-		if (create_peer_thread.joinable()) create_peer_thread.detach();
+		}
+		else
+		{
+		    std::cout << "ACCEPTED" << std::endl;
+		    peers.emplace_back(peer_fd, &tmpaddr);
+		}
 	}
-}
-
-void inc_peer_factory::thread_create_peer(int peer_fd, sockaddr_in6 *saddr)
-{
-	//TO DO STORE IT SOMWHERE
-	new peer(peer_fd, saddr);
 }
 
 void inc_peer_factory::stop()

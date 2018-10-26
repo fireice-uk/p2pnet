@@ -105,13 +105,12 @@ public:
 	//REFACTORING
 	peer(SOCKET _peer_fd, const sockaddr_in* addr); 
 	peer(SOCKET _peer_fd, const sockaddr_in6* addr);
-	void closesocket();
+	void close();
 	void add_send_data(const char *data, int len);
 
 protected:
 	
 	//REFACTORING
-	bool quit = false;
 	SOCKET peer_fd;
 	sockaddr_in ip4_addr;
 	sockaddr_in6 ip6_addr;

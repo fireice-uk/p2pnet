@@ -22,8 +22,6 @@
 class inc_peer_factory
 {
 public:
-	
-	//Refactoring
 	inc_peer_factory();
 	~inc_peer_factory();
 	void start(const char *saddr = nullptr, uint16_t port = 0, int backlog = 10);
@@ -31,13 +29,11 @@ public:
 
 
 protected:
-	//Refactoring
 	SOCKET listen_fd = INVALID_SOCKET;
 	std::thread accept_thread;
-
+	std::vector<peer> peers;
+	
 	void thread_accept();
-	void thread_create_peer(int peer_fd, sockaddr_in6 *saddr);
-
 private:
 	
 };

@@ -63,7 +63,6 @@ int main()
 	std::cin.get();
 	
 	incfac.stop();
-	incfac.join_accept_thread();
 
 	wsock_cleaup();
 

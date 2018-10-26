@@ -20,11 +20,8 @@ peer::peer(SOCKET _peer_fd, const sockaddr_in *addr) : peer_fd(_peer_fd)
     memcpy(&ip4_addr, addr, sizeof(sockaddr_in));
     memset(&ip6_addr, 0, sizeof(sockaddr_in6));
     
-    t_send = std::thread([&]() {this->send_thread(); });
-    t_recv = std::thread([&]() {this->recv_thread(); });
-
-    if (t_send.joinable()) t_send.detach();
-    if (t_recv.joinable()) t_recv.detach();
+    t_send = std::thread(&peer::send_thread, this);
+    t_recv = std::thread(&peer::recv_thread, this);
 }
 
 peer::peer(SOCKET _peer_fd, const sockaddr_in6 *addr) : peer_fd(_peer_fd)
@@ -43,7 +40,7 @@ void peer::send_thread()
 {
 	//TODO SEND DATA
 
-	while (!quit)
+	while (peer_fd != INVALID_SOCKET)
 	{
 		if (!send_data.empty())
 		{
@@ -73,7 +70,7 @@ void peer::recv_thread()
 	//TODO RECV DATA
 	int reclen;
 	char buffer[1024];
-	while (!quit)
+	while (peer_fd != INVALID_SOCKET)
 	{
 		reclen = recv(peer_fd, buffer, 1024, 0);
 		if (reclen > 0)
@@ -131,8 +128,10 @@ void peer::add_send_data_thread(const char *data, int len)
 	send_mutex.unlock();
 }
 
-void peer::closesocket()
+void peer::close()
 {	
-      quit = true;
-      close(peer_fd);
+      ::close(peer_fd);
+      peer_fd = INVALID_SOCKET;
+      if (t_send.joinable()) t_send.join();
+      if (t_recv.joinable()) t_recv.join();
 }

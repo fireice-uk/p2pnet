@@ -34,7 +34,7 @@ public:
 	
 protected:
       
-	
+	std::vector<peer> peers;
 private:
 };
 
