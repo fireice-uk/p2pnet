@@ -167,33 +167,6 @@ p2pnet/fast:
 	$(MAKE) -f CMakeFiles/p2pnet.dir/build.make CMakeFiles/p2pnet.dir/build
 .PHONY : p2pnet/fast
 
-adress_container.o: adress_container.cpp.o
-
-.PHONY : adress_container.o
-
-# target to build an object file
-adress_container.cpp.o:
-	$(MAKE) -f CMakeFiles/p2pnet.dir/build.make CMakeFiles/p2pnet.dir/adress_container.cpp.o
-.PHONY : adress_container.cpp.o
-
-adress_container.i: adress_container.cpp.i
-
-.PHONY : adress_container.i
-
-# target to preprocess a source file
-adress_container.cpp.i:
-	$(MAKE) -f CMakeFiles/p2pnet.dir/build.make CMakeFiles/p2pnet.dir/adress_container.cpp.i
-.PHONY : adress_container.cpp.i
-
-adress_container.s: adress_container.cpp.s
-
-.PHONY : adress_container.s
-
-# target to generate assembly for a file
-adress_container.cpp.s:
-	$(MAKE) -f CMakeFiles/p2pnet.dir/build.make CMakeFiles/p2pnet.dir/adress_container.cpp.s
-.PHONY : adress_container.cpp.s
-
 inc_peer_factory.o: inc_peer_factory.cpp.o
 
 .PHONY : inc_peer_factory.o
@@ -302,33 +275,6 @@ peer.cpp.s:
 	$(MAKE) -f CMakeFiles/p2pnet.dir/build.make CMakeFiles/p2pnet.dir/peer.cpp.s
 .PHONY : peer.cpp.s
 
-smart_socket.o: smart_socket.cpp.o
-
-.PHONY : smart_socket.o
-
-# target to build an object file
-smart_socket.cpp.o:
-	$(MAKE) -f CMakeFiles/p2pnet.dir/build.make CMakeFiles/p2pnet.dir/smart_socket.cpp.o
-.PHONY : smart_socket.cpp.o
-
-smart_socket.i: smart_socket.cpp.i
-
-.PHONY : smart_socket.i
-
-# target to preprocess a source file
-smart_socket.cpp.i:
-	$(MAKE) -f CMakeFiles/p2pnet.dir/build.make CMakeFiles/p2pnet.dir/smart_socket.cpp.i
-.PHONY : smart_socket.cpp.i
-
-smart_socket.s: smart_socket.cpp.s
-
-.PHONY : smart_socket.s
-
-# target to generate assembly for a file
-smart_socket.cpp.s:
-	$(MAKE) -f CMakeFiles/p2pnet.dir/build.make CMakeFiles/p2pnet.dir/smart_socket.cpp.s
-.PHONY : smart_socket.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -342,9 +288,6 @@ help:
 	@echo "... edit_cache"
 	@echo "... install/strip"
 	@echo "... install/local"
-	@echo "... adress_container.o"
-	@echo "... adress_container.i"
-	@echo "... adress_container.s"
 	@echo "... inc_peer_factory.o"
 	@echo "... inc_peer_factory.i"
 	@echo "... inc_peer_factory.s"
@@ -357,9 +300,6 @@ help:
 	@echo "... peer.o"
 	@echo "... peer.i"
 	@echo "... peer.s"
-	@echo "... smart_socket.o"
-	@echo "... smart_socket.i"
-	@echo "... smart_socket.s"
 .PHONY : help
 
 

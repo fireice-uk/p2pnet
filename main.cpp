@@ -12,6 +12,7 @@
  */
 
 #include <cstdlib>
+#include <unistd.h>
 #include "inc_peer_factory.h"
 #include "out_peer_factory.h"
 
@@ -38,23 +39,27 @@ int main()
 	std::cin >> port;
 	inc_peer_factory incfac(interptr, port);
 	
-	char wait[1024];
-	std::cin >> wait;
+	sleep(1);
+	std::cin.ignore(1024, '\n');
+	std::cout << "Press enter to continue..." << std::endl;
+	std::cin.get();
 
 	char inter2[128];
 	std::cout << "Connect Interface: ";
 	std::cin >> inter2;
 
-	int port2;
-	std::cout << "Connect Port: ";
-	std::cin >> port2;
+	//int port2;
+	//std::cout << "Connect Port: ";
+	//std::cin >> port2;
 
 	out_peer_factory outfac;
-	outfac.connect_to(inter2, port2);
+	outfac.connect(inter2/*, port2*/);
 
-
-	std::cin >> wait;
-
+	sleep(1);
+	std::cin.ignore(1024, '\n');
+	std::cout << "Press enter to continue..." << std::endl;
+	std::cin.get();
+	
 	incfac.stop();
 	incfac.join_accept_thread();
 

@@ -4,12 +4,10 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/benqgg/projects/p2pnet/adress_container.cpp" "/home/benqgg/projects/p2pnet/build/CMakeFiles/p2pnet.dir/adress_container.cpp.o"
   "/home/benqgg/projects/p2pnet/inc_peer_factory.cpp" "/home/benqgg/projects/p2pnet/build/CMakeFiles/p2pnet.dir/inc_peer_factory.cpp.o"
   "/home/benqgg/projects/p2pnet/main.cpp" "/home/benqgg/projects/p2pnet/build/CMakeFiles/p2pnet.dir/main.cpp.o"
   "/home/benqgg/projects/p2pnet/out_peer_factory.cpp" "/home/benqgg/projects/p2pnet/build/CMakeFiles/p2pnet.dir/out_peer_factory.cpp.o"
   "/home/benqgg/projects/p2pnet/peer.cpp" "/home/benqgg/projects/p2pnet/build/CMakeFiles/p2pnet.dir/peer.cpp.o"
-  "/home/benqgg/projects/p2pnet/smart_socket.cpp" "/home/benqgg/projects/p2pnet/build/CMakeFiles/p2pnet.dir/smart_socket.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

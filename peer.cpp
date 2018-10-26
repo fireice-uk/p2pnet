@@ -23,23 +23,13 @@ peer::peer(SOCKET _peer_fd, const sockaddr_in *addr) : peer_fd(_peer_fd), addr4(
     if (t_recv.joinable()) t_recv.detach();
 }
 
-peer::peer(SOCKET _peer_fd, const sockaddr_in *addr) : peer_fd(_peer_fd), addr6(*addr)
+peer::peer(SOCKET _peer_fd, const sockaddr_in6 *addr) : peer_fd(_peer_fd), addr6(*addr)
 {
     t_send = std::thread([&]() {this->send_thread(); });
     t_recv = std::thread([&]() {this->recv_thread(); });
 
     if (t_send.joinable()) t_send.detach();
     if (t_recv.joinable()) t_recv.detach();
-}
-
-peer::peer(smart_socket *_ssocket) :
-	ssocket(_ssocket)
-{
-	t_send = std::thread([&]() {this->send_thread(); });
-	t_recv = std::thread([&]() {this->recv_thread(); });
-
-	if (t_send.joinable()) t_send.detach();
-	if (t_recv.joinable()) t_recv.detach();
 }
 
 void peer::send_thread()
@@ -57,12 +47,12 @@ void peer::send_thread()
 
 			memcpy(&len, buff, sizeof(len));
 
-			sdlen = ssocket->smart_send(buff, (len + sizeof(len)));
+			sdlen =  send(peer_fd, buff, (len + sizeof(len)), 0);
 
 			while(sdlen < len+sizeof(len))
 			{
 			  //TODO SOME DATA LEFT UNSEND
-			  sdlen += ssocket->smart_send(buff[sdlen], (len + sizeof(len) - sdlen));
+			  sdlen += send(peer_fd, (char*)buff[sdlen], (len + sizeof(len) - sdlen), 0);
 			}
 			send_data.pop();
 
@@ -78,7 +68,7 @@ void peer::recv_thread()
 	char buffer[1024];
 	while (!quit)
 	{
-		reclen = ssocket->smart_recv(buffer, 1024);
+		reclen = recv(peer_fd, buffer, 1024, 0);
 		if (reclen > 0)
 		{
 			recv_mutex.lock();
@@ -103,10 +93,12 @@ void peer::recv_thread()
 		else if (reclen == 0)
 		{
 			//CONNECTION LOST
+			std::cout << "PEER: " << peer_fd << " DISCONNECTED" << std::endl;
 		}
 		else
 		{
 			//ERROR
+			std::cout << "RECV ERROR - PEER: " << peer_fd << std::endl;
 		}
 	}
 }
@@ -132,13 +124,8 @@ void peer::add_send_data_thread(const char *data, int len)
 	send_mutex.unlock();
 }
 
-void peer::stop()
-{
-	quit = true;
-	ssocket->smart_close();
-}
-
 void peer::closesocket()
-{
-  close(peer_fd);
+{	
+      quit = true;
+      close(peer_fd);
 }

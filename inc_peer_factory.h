@@ -24,7 +24,7 @@ class inc_peer_factory
 public:
 	
 	//Refactoring
-	inc_peer_factory(const char *ip = nullptr, uint16_t port = 0, int backlog = 10);
+	inc_peer_factory(const char *saddr = nullptr, uint16_t port = 0, int backlog = 10);
 	~inc_peer_factory();
 	inline void join_accept_thread() { if (accept_thread.joinable()) accept_thread.join(); };
 	void stop();
@@ -36,12 +36,9 @@ protected:
 	SOCKET listen_fd;
 	std::thread accept_thread;
 	bool _stop = false; 
-	void call_listen(const char *_ip = nullptr, uint16_t port = 0, int backlog = 10);
+	void call_listen(const char *saddr = nullptr, uint16_t port = 0, int backlog = 10);
 	void thread_accept();
-	void thread_create_peer(int peer_fd);
-	
-	void thread_create_peer(smart_socket* ss);
-	smart_socket *listen_socket;
+	void thread_create_peer(int peer_fd, sockaddr_in6 saddr);
 
 private:
 };
