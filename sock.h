@@ -62,6 +62,7 @@ inline void wsock_cleaup()
 #define INVALID_SOCKET -1
 #define SOCK_OPT int
 #define OPT_YES 1
+#define SD_BOTH SHUT_RDWR
 
 typedef int SOCKET;
 

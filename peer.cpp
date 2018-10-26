@@ -46,10 +46,7 @@ void peer::send_thread()
 			int sdlen = send(peer_fd, (char*)(&data.front()+sent), data.size()-sent, 0);
 
 			if(sdlen <= 0)
-			{
-				peer_fd = INVALID_SOCKET;
 				return;
-			}
 
 			sent += sdlen;
 		}
@@ -62,14 +59,15 @@ void peer::recv_thread()
 	std::unique_ptr<uint8_t[]> buffer(new uint8_t[buflen]);
 	size_t bufpos = 0;
 
-	while (peer_fd != INVALID_SOCKET)
+	while(peer_fd != INVALID_SOCKET)
 	{
 		int reclen = recv(peer_fd, (char*)buffer.get()+bufpos, buflen-bufpos, 0);
 
-		if (reclen == 0)
+		if(reclen == 0)
 		{
 			//CONNECTION LOST
 			std::cout << "PEER: " << peer_fd << " DISCONNECTED" << std::endl;
+			::close(peer_fd);
 			peer_fd = INVALID_SOCKET;
 			break;
 		}
@@ -77,6 +75,7 @@ void peer::recv_thread()
 		{
 			//ERROR
 			std::cout << "RECV ERROR - PEER: " << peer_fd << std::endl;
+			::close(peer_fd);
 			peer_fd = INVALID_SOCKET;
 			break;
 		}
@@ -87,9 +86,13 @@ void peer::recv_thread()
 
 void peer::close()
 {
-	::close(peer_fd);
+	shutdown(peer_fd, SD_BOTH);
 	sendq.set_finish_flag();
+	if(t_send.joinable()) 
+		t_send.join();
+	if(t_recv.joinable()) 
+		t_recv.join();
+	if(peer_fd != INVALID_SOCKET)
+		::close(peer_fd);
 	peer_fd = INVALID_SOCKET;
-	if (t_send.joinable()) t_send.join();
-	if (t_recv.joinable()) t_recv.join();
 }
