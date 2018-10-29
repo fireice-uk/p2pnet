@@ -21,40 +21,39 @@
 template <class C>
 std::size_t countof(const C& c)
 {
-	return c.size();
+  return c.size();
 }
 
 constexpr const char* dns_seeds[] = {
-	"127.0.0.1:3333"
+  "127.0.0.1:3333"
 };
 
 class out_peer_factory
 {
 private:
-	struct sock_data
-	{
-		SOCKET sock = INVALID_SOCKET;
-		sockaddr_in addr4;
-		sockaddr_in6 addr6;
-		bool ip4;
-	};
+  struct sock_data
+  {
+    SOCKET sock = INVALID_SOCKET;
+    sockaddr_in addr4;
+    sockaddr_in6 addr6;
+    bool ip4;
+  };
 
 public:
 	
-	//REFACTORING
-	out_peer_factory();
-	static void connect_dns(sock_data& out, const char* full_addr);
-	static void connect_ip(sock_data& out, const char *saddr, uint16_t port);
-	static void connect4(sock_data& out, sockaddr_in addr);
-	static void connect6(sock_data& out, sockaddr_in6 addr);
-	
-	void connect_peers(size_t n);
-	void connect_seeds();
-	void stop_peers();
+  out_peer_factory();
+  static void connect_dns(sock_data& out, const char* full_addr);
+  static void connect_ip(sock_data& out, const char *saddr, uint16_t port);
+  static void connect4(sock_data& out, sockaddr_in addr);
+  static void connect6(sock_data& out, sockaddr_in6 addr);
+	  
+  void connect_peers(size_t n);
+  void connect_seeds();
+  void stop_peers();
 	
 protected:
 
-	std::list<peer> peers;
+  std::list<peer> peers;
 };
 
 #endif /* OUT_PEER_FACTORY_H */

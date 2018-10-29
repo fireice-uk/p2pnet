@@ -33,23 +33,23 @@ class peer
 {
 public:
 	
-	peer(SOCKET _peer_fd, const sockaddr_in* addr); 
-	peer(SOCKET _peer_fd, const sockaddr_in6* addr);
-	void close();
-	void send_data(std::vector<uint8_t>&& data) { sendq.push(std::move(data)); }
+  peer(SOCKET _peer_fd, const sockaddr_in* addr); 
+  peer(SOCKET _peer_fd, const sockaddr_in6* addr);
+  void close();
+  void send_data(std::vector<uint8_t>&& data) { sendq.push(std::move(data)); }
 
 protected:
 	
-	SOCKET peer_fd;
-	sockaddr_in ip4_addr;
-	sockaddr_in6 ip6_addr;
-	std::thread t_send;
-	std::thread t_recv;
+  SOCKET peer_fd;
+  sockaddr_in ip4_addr;
+  sockaddr_in6 ip6_addr;
+  std::thread t_send;
+  std::thread t_recv;
 
-	thdq<std::vector<uint8_t>> sendq;
+  thdq<std::vector<uint8_t>> sendq;
 
-	void send_thread();
-	void recv_thread();
+  void send_thread();
+  void recv_thread();
 	
 private:
 };

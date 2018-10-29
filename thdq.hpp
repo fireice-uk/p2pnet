@@ -53,68 +53,68 @@ template <typename T>
 class thdq
 {
 public:
-	thdq() : lck_(mutex_, std::defer_lock) {}
-	
-	bool pop(T& item)
-	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		while (queue_.empty() && !finish) { cond_.wait(mlock); }
-		bool ret = false;
-		if(!queue_.empty())
-		{
-			item = std::move(queue_.front());
-			queue_.pop();
-			ret = true;
-		}
-		return ret;
-	}
+  thdq() : lck_(mutex_, std::defer_lock) {}
 
-	bool wait_for_pop()
-	{
-		lck_.lock();
-		while (queue_.empty() && !finish) { cond_.wait(lck_); }
-		bool has_pop = !queue_.empty();
-		if(!has_pop) lck_.unlock();
-		return has_pop;
-	}
+  bool pop(T& item)
+  {
+    std::unique_lock<std::mutex> mlock(mutex_);
+    while (queue_.empty() && !finish) { cond_.wait(mlock); }
+    bool ret = false;
+    if(!queue_.empty())
+    {
+	    item = std::move(queue_.front());
+	    queue_.pop();
+	    ret = true;
+    }
+    return ret;
+  }
 
-	T pop()
-	{
-		T item = std::move(queue_.front());
-		queue_.pop();
-		lck_.unlock();
-		return item;
-	}
+  bool wait_for_pop()
+  {
+    lck_.lock();
+    while (queue_.empty() && !finish) { cond_.wait(lck_); }
+    bool has_pop = !queue_.empty();
+    if(!has_pop) lck_.unlock();
+    return has_pop;
+  }
 
-	void push(const T& item)
-	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		if(finish) return;
-		queue_.push(item);
-		mlock.unlock();
-		cond_.notify_one();
-	}
+  T pop()
+  {
+    T item = std::move(queue_.front());
+    queue_.pop();
+    lck_.unlock();
+    return item;
+  }
 
-	void push(T&& item)
-	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		if(finish) return;
-		queue_.push(std::move(item));
-		mlock.unlock();
-		cond_.notify_one();
-	}
+  void push(const T& item)
+  {
+    std::unique_lock<std::mutex> mlock(mutex_);
+    if(finish) return;
+    queue_.push(item);
+    mlock.unlock();
+    cond_.notify_one();
+  }
 
-	void set_finish_flag()
-	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		finish = true;
-		cond_.notify_one();
-	}
+  void push(T&& item)
+  {
+    std::unique_lock<std::mutex> mlock(mutex_);
+    if(finish) return;
+    queue_.push(std::move(item));
+    mlock.unlock();
+    cond_.notify_one();
+  }
+
+  void set_finish_flag()
+  {
+    std::unique_lock<std::mutex> mlock(mutex_);
+    finish = true;
+    cond_.notify_one();
+  }
 
 private:
-	std::queue<T> queue_;
-	std::mutex mutex_;
-	std::condition_variable cond_;
-	std::unique_lock<std::mutex> lck_;
-	bool finish = false;
+    std::queue<T> queue_;
+    std::mutex mutex_;
+    std::condition_variable cond_;
+    std::unique_lock<std::mutex> lck_;
+    bool finish = false;
 };
