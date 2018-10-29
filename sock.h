@@ -71,3 +71,5 @@ inline void wsock_init() {}
 inline void wsock_cleaup() {}
 
 #endif
+
+constexpr size_t MAX_HALFOPEN = 8;
