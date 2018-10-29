@@ -19,7 +19,7 @@ out_peer_factory::out_peer_factory()
 	//CHECK FOR ERROR
 }
 
-void out_peer_factory::connect(sock_data& out, const char* full_addr)
+void out_peer_factory::connect_dns(sock_data& out, const char* full_addr)
 {	
 	//RESOLVE DNS
 	char _addr[256];
@@ -90,19 +90,19 @@ void out_peer_factory::connect(sock_data& out, const char* full_addr)
 			    if(!addr.empty())
 			    {	
 				int n = rand() % addr.size();
-				connect(out, addr[n]);
+				connect4(out, addr[n]);
 			    }
 			    else if(!addr6.empty())
 			    {	
 				int n = rand() % addr6.size();
-				connect(out, addr6[n]);
+				connect6(out, addr6[n]);
 			    }
 			}
 		}
 	}
 }
 
-void out_peer_factory::connect(sock_data& out, const char *saddr, uint16_t port)
+void out_peer_factory::connect_ip(sock_data& out, const char *saddr, uint16_t port)
 {
 	sockaddr_in6 _addr6 = { 0 };
 	sockaddr_in _addr4 = { 0 };
@@ -112,7 +112,7 @@ void out_peer_factory::connect(sock_data& out, const char *saddr, uint16_t port)
 		_addr4.sin_family = AF_INET;
 		_addr4.sin_port = htons(port);
 		
-		connect(out, _addr4);
+		connect4(out, _addr4);
 
 	}
 	else if (inet_pton(AF_INET6, saddr, &(_addr6.sin6_addr)) == 1)
@@ -120,7 +120,7 @@ void out_peer_factory::connect(sock_data& out, const char *saddr, uint16_t port)
 		_addr6.sin6_family = AF_INET6;
 		_addr6.sin6_port = htons(port);
 			
-		connect(out, _addr6); 
+		connect5(out, _addr6); 
 	}
 	else
 	{
@@ -128,7 +128,7 @@ void out_peer_factory::connect(sock_data& out, const char *saddr, uint16_t port)
 	}
 }
 
-void out_peer_factory::connect(sock_data& out, sockaddr_in addr)
+void out_peer_factory::connect4(sock_data& out, sockaddr_in addr)
 {
      SOCKET peer_fd = socket(PF_INET, SOCK_STREAM, 0);
      
@@ -152,7 +152,7 @@ void out_peer_factory::connect(sock_data& out, sockaddr_in addr)
      }
 }
 
-void out_peer_factory::connect(sock_data& out, sockaddr_in6 addr)
+void out_peer_factory::connect6(sock_data& out, sockaddr_in6 addr)
 {
      SOCKET peer_fd = socket(PF_INET6, SOCK_STREAM, 0);
      
@@ -189,6 +189,52 @@ void out_peer_factory::connect_peers(size_t n)
 	}
 }
 
+void out_peer_factory::connect_seeds()
+{
+	std::list<std::thread> conthd;
+	std::list<sock_data> dat;
+	size_t done_seeds = 0;
+	
+	while(done_seeds < countof(dns_seeds))
+	{
+		dat.emplace_back();
+		conthd.emplace_back(&out_peer_factory::connect_dns, dat.back(), dns_seeds[done_seeds]);
+		
+		if(conthd.size() >= MAX_HALFOPEN)
+		{
+			conthd.front().join();
+			const sock_data& res = dat.front();
+
+			if(res.sock != INVALID_SOCKET)
+			{
+				if(res.ip4)
+					peers.emplace_back(res.sock, &res.addr4);
+				else
+					peers.emplace_back(res.sock, &res.addr6);
+			}
+			
+			conthd.pop_front();
+			dat.pop_front();
+		}
+	}
+	
+	while(conthd.size() > 0)
+	{
+		conthd.front().join();
+		const sock_data& res = dat.front();
+
+		if(res.sock != INVALID_SOCKET)
+		{
+			if(res.ip4)
+				peers.emplace_back(res.sock, &res.addr4);
+			else
+				peers.emplace_back(res.sock, &res.addr6);
+		}
+		
+		conthd.pop_front();
+		dat.pop_front();
+	}
+}
 void out_peer_factory::stop_peers()
 {
 	for(auto &a : peers)
