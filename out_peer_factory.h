@@ -18,13 +18,13 @@
 
 #include "peer.h"
 
-template <class C>
-std::size_t countof(const C& c)
+template<typename T, std::size_t N>
+constexpr std::size_t countof(T const (&)[N]) noexcept
 {
-	return c.size();
+	return N;
 }
 
-constexpr const char* dns_seeds[] = {
+static const char* dns_seeds[] = {
 	"127.0.0.1:3333"
 };
 
