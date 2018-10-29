@@ -127,7 +127,7 @@ void inc_peer_factory::stop()
 {
 	if(listen_fd != INVALID_SOCKET)
 	{
-		shutdown(listen_fd, SHUT_RDWR); // THIS BREAK ACCEPT
+		shutdown(listen_fd, SD_BOTH); // THIS BREAK ACCEPT
 		close(listen_fd);
 		listen_fd = INVALID_SOCKET;
 	}
