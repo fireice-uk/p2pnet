@@ -16,41 +16,39 @@
 
 #pragma once
 
-#include <sys/types.h>
-#include <string.h>
+#include <inttypes.h>
 #include <iostream>
-#include <vector>
+#include <mutex>
 #include <queue>
 #include <stdio.h>
-#include <inttypes.h>
+#include <string.h>
+#include <sys/types.h>
 #include <thread>
-#include <mutex>
+#include <vector>
 
 #include "sock.h"
 #include "thdq.hpp"
 
 class peer
 {
-public:
-	
-  peer(SOCKET _peer_fd, const sockaddr_in* addr); 
-  peer(SOCKET _peer_fd, const sockaddr_in6* addr);
-  void close();
-  void send_data(std::vector<uint8_t>&& data) { sendq.push(std::move(data)); }
+  public:
+	peer(SOCKET _peer_fd, const sockaddr_in *addr);
+	peer(SOCKET _peer_fd, const sockaddr_in6 *addr);
+	void close();
+	void send_data(std::vector<uint8_t> &&data) { sendq.push(std::move(data)); }
 
-protected:
-	
-  SOCKET peer_fd;
-  sockaddr_in ip4_addr;
-  sockaddr_in6 ip6_addr;
-  std::thread t_send;
-  std::thread t_recv;
+  protected:
+	SOCKET peer_fd;
+	sockaddr_in ip4_addr;
+	sockaddr_in6 ip6_addr;
+	std::thread t_send;
+	std::thread t_recv;
 
-  thdq<std::vector<uint8_t>> sendq;
+	thdq<std::vector<uint8_t>> sendq;
 
-  void send_thread();
-  void recv_thread();
-	
-private:
+	void send_thread();
+	void recv_thread();
+
+  private:
 };
 #endif /* PEER_H */

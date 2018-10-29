@@ -8,10 +8,10 @@
 
 //#define _WIN32_WINNT 0x0801
 #include "stdafx.h"
-#include <windows.h>
 #include <WS2tcpip.h>
 #include <WinSock2.h>
 #include <iphlpapi.h>
+#include <windows.h>
 #define WINDOWS TRUE
 #define LINUX FALSE
 #define close(a) closesocket(a)
@@ -21,10 +21,10 @@
 inline void wsock_init()
 {
 	static bool bWSAInit = false;
-	if (!bWSAInit)
+	if(!bWSAInit)
 	{
 		WSADATA wsaData;
-		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		if(WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 		{
 			//ERROR
 			std::cout << "WSAStartup ERROR" << std::endl;
@@ -38,24 +38,22 @@ inline void wsock_init()
 
 inline void wsock_cleaup()
 {
-	if (WSACleanup() != 0)
+	if(WSACleanup() != 0)
 	{
 		//ERROR
 	}
 	else
 	{
-
 	}
 }
 #endif
 
-
 #ifdef __linux__ //TODO LINUX LINUX SUPPORT
-#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <netdb.h>
-#include <arpa/inet.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #define WINDOWS FALSE
 #define LINUX TRUE
