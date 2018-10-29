@@ -200,7 +200,7 @@ void out_peer_factory::connect_seeds()
   while(done_seeds < countof(dns_seeds))
   {
     dat.emplace_back();
-    conthd.emplace_back(&out_peer_factory::connect_dns, dat.back(), dns_seeds[done_seeds]);
+    conthd.emplace_back(&out_peer_factory::connect_dns, std::ref(dat.back()), dns_seeds[done_seeds]);
     
     if(conthd.size() >= MAX_HALFOPEN)
     {
