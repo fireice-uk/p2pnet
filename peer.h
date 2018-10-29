@@ -33,8 +33,6 @@ class peer
 {
 public:
 	
-	peer(peer&& p) : peer_fd(std::move(p.peer_fd)), ip4_addr(std::move(p.ip4_addr)), ip6_addr(std::move(p.ip6_addr)), t_send(std::move(p.t_send)), 
-		t_recv(std::move(p.t_recv)) {}
 	peer(SOCKET _peer_fd, const sockaddr_in* addr); 
 	peer(SOCKET _peer_fd, const sockaddr_in6* addr);
 	void close();

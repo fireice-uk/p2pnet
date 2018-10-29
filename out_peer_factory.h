@@ -44,7 +44,7 @@ public:
 	
 protected:
 
-	std::vector<peer> peers;
+	std::list<peer> peers;
 };
 
 #endif /* OUT_PEER_FACTORY_H */

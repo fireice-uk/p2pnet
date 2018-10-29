@@ -32,7 +32,7 @@ public:
 protected:
 	SOCKET listen_fd = INVALID_SOCKET;
 	std::thread accept_thread;
-	std::vector<peer> peers;
+	std::list<peer> peers;
 	
 	void thread_accept();
 	
