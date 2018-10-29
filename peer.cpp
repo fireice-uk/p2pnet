@@ -86,7 +86,6 @@ void peer::recv_thread()
 
 void peer::close()
 {
-	shutdown(peer_fd, SD_BOTH);
 	sendq.set_finish_flag();
 	if(t_send.joinable()) 
 		t_send.join();

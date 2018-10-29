@@ -26,6 +26,7 @@ public:
 	~inc_peer_factory();
 	void start(const char *saddr = nullptr, uint16_t port = 0, int backlog = 10);
 	void stop();
+	void stop_peers();
 
 
 protected:
@@ -34,6 +35,7 @@ protected:
 	std::vector<peer> peers;
 	
 	void thread_accept();
+	
 private:
 	
 };

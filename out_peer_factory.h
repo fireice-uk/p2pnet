@@ -40,6 +40,7 @@ public:
 	static void connect(sock_data& out, sockaddr_in6 addr);
 	
 	void connect_peers(size_t n);
+	void stop_peers();
 	
 protected:
 

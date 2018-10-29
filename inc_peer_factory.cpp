@@ -102,19 +102,23 @@ void inc_peer_factory::thread_accept()
 	std::cout << "Waitng for peer" << std::endl;
 	
 	while(listen_fd != INVALID_SOCKET)
-	{
+	{	
 		sockaddr_in6 tmpaddr = { 0 }; 
 		socklen_t tmpsize = sizeof(tmpaddr);
 		SOCKET peer_fd = accept(listen_fd, (sockaddr*)&tmpaddr, &tmpsize);
 		if ( peer_fd == INVALID_SOCKET)
 		{
 			std::cout << "CAN NOT ACCEPT - INC PEER FAC" << std::endl;
-			
 		}
 		else
 		{
 		    std::cout << "ACCEPTED" << std::endl;
 		    peers.emplace_back(peer_fd, &tmpaddr);
+		   
+		    //SEND DATA TEST
+		    std::vector<u_int8_t> msg;
+		    msg.push_back('W');
+		    peers.back().send_data(std::move(msg));
 		}
 	}
 }
@@ -123,10 +127,19 @@ void inc_peer_factory::stop()
 {
 	if(listen_fd != INVALID_SOCKET)
 	{
+		shutdown(listen_fd, SHUT_RDWR); // THIS BREAK ACCEPT
 		close(listen_fd);
 		listen_fd = INVALID_SOCKET;
 	}
 
 	if(accept_thread.joinable())
-		accept_thread.join();
+	{
+	    accept_thread.join();
+	}	
+}
+
+void inc_peer_factory::stop_peers()
+{
+	for(auto &a : peers)
+	  a.close();
 }
