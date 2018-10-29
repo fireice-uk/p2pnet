@@ -57,6 +57,12 @@ thread
 -
 mutex
 -
+sock.h
+/home/benqgg/projects/p2pnet/sock.h
+thdq.hpp
+/home/benqgg/projects/p2pnet/thdq.hpp
+
+/home/benqgg/projects/p2pnet/sock.h
 stdafx.h
 /home/benqgg/projects/p2pnet/stdafx.h
 windows.h
@@ -78,5 +84,17 @@ netdb.h
 arpa/inet.h
 -
 unistd.h
+-
+
+/home/benqgg/projects/p2pnet/thdq.hpp
+queue
+-
+list
+-
+thread
+-
+mutex
+-
+condition_variable
 -
 

@@ -1,3 +1,4 @@
+// 
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -19,9 +20,7 @@ out_peer_factory::out_peer_factory()
 }
 
 void out_peer_factory::connect(sock_data& out, const char* full_addr)
-{
-	SOCKET res = INVALID_SOCKET;
-	
+{	
 	//RESOLVE DNS
 	char _addr[256];
 	char *_port;
@@ -91,20 +90,12 @@ void out_peer_factory::connect(sock_data& out, const char* full_addr)
 			    if(!addr.empty())
 			    {	
 				int n = rand() % addr.size();
-				res = connect(out, addr[n]);
-				if(res == INVALID_SOCKET)
-				{
-					std::cout << "CAN NOT CONNECT TO: " << _addr << " : " << _port << std::endl;
-				}
+				connect(out, addr[n]);
 			    }
 			    else if(!addr6.empty())
 			    {	
 				int n = rand() % addr6.size();
-				res = connect(out, addr6[n]);
-				if(res == INVALID_SOCKET)
-				{
-					std::cout << "CAN NOT CONNECT TO: " << _addr << " : " << _port << std::endl;
-				}
+				connect(out, addr6[n]);
 			    }
 			}
 		}
@@ -116,29 +107,20 @@ void out_peer_factory::connect(sock_data& out, const char *saddr, uint16_t port)
 	sockaddr_in6 _addr6 = { 0 };
 	sockaddr_in _addr4 = { 0 };
 	
-	SOCKET res = INVALID_SOCKET;
-	
 	if (inet_pton(AF_INET, saddr, &(_addr4.sin_addr)) == 1)
 	{
 		_addr4.sin_family = AF_INET;
 		_addr4.sin_port = htons(port);
 		
-		res = connect(out, _addr4);
-		if(res == INVALID_SOCKET)
-		{
-		      std::cout << "CAN NOT CONNECT TO: " << saddr << " : " << port << std::endl;
-		}
+		connect(out, _addr4);
+
 	}
 	else if (inet_pton(AF_INET6, saddr, &(_addr6.sin6_addr)) == 1)
 	{
 		_addr6.sin6_family = AF_INET6;
 		_addr6.sin6_port = htons(port);
 			
-		res = connect(out, _addr6); 
-		if(res == INVALID_SOCKET)
-		{
-		      std::cout << "CAN NOT CONNECT TO: " << saddr << " : " << port << std::endl;
-		}
+		connect(out, _addr6); 
 	}
 	else
 	{
@@ -163,6 +145,10 @@ void out_peer_factory::connect(sock_data& out, sockaddr_in addr)
 	      out.addr4 = addr;
 	      out.sock = peer_fd;
 	}
+	else
+	{	
+	      std::cout << "CAN NOT CONNECT" << std::endl;
+	}
      }
 }
 
@@ -183,6 +169,10 @@ void out_peer_factory::connect(sock_data& out, sockaddr_in6 addr)
 	     out.addr6 = addr;
 	     out.sock = peer_fd;
 	}
+	else
+	{	
+	      std::cout << "CAN NOT CONNECT" << std::endl;
+	}
      }
 }
 
@@ -193,8 +183,14 @@ void out_peer_factory::connect_peers(size_t n)
 	if(s.sock != INVALID_SOCKET)
 	{
 		if(s.ip4)
-			peers.emplace_back(s.sock, s.addr4);
+			peers.emplace_back(s.sock, &s.addr4);
 		else
-			peers.emplace_back(s.sock, s.addr6);
+			peers.emplace_back(s.sock, &s.addr6);
 	}
+}
+
+void out_peer_factory::stop_peers()
+{
+	for(auto &a : peers)
+	  a.close();
 }

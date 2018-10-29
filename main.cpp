@@ -24,9 +24,6 @@ int main()
 	srand(std::time(NULL));
 	wsock_init();
 	
-	//TODO REMOVE INPUTS PASSED AT START
-	//std::cin.ignore();
-	
 	char inter[128];
 	char *interptr = inter;
 	std::cout << "Listen Interface(0 for null): ";
@@ -41,28 +38,30 @@ int main()
 	inc_peer_factory incfac;
 	incfac.start(interptr, port);
 	
-	sleep(1);
-	std::cin.ignore(1024, '\n');
-	std::cout << "Press enter to continue..." << std::endl;
-	std::cin.get();
-
-	char inter2[128];
-	std::cout << "Connect Interface: ";
-	std::cin >> inter2;
-
-	//int port2;
-	//std::cout << "Connect Port: ";
-	//std::cin >> port2;
-
-	out_peer_factory outfac;
-	outfac.connect(inter2/*, port2*/);
-
-	sleep(1);
+	sleep(0.5f);
 	std::cin.ignore(1024, '\n');
 	std::cout << "Press enter to continue..." << std::endl;
 	std::cin.get();
 	
+	char inter2[128];
+	std::cout << "Connect Interface: ";
+	std::cin >> inter2;
+	
+	int port2;
+	std::cout << "Connect Port: ";
+	std::cin >> port2;
+
+	out_peer_factory outfac;
+	outfac.connect_peers(1);
+
+	sleep(0.5f);
+	std::cin.ignore(1024, '\n');
+	std::cout << "Press enter to continue..." << std::endl;
+	std::cin.get();
+	
+	incfac.stop_peers();
 	incfac.stop();
+	outfac.stop_peers();
 
 	wsock_cleaup();
 

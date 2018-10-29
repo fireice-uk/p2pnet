@@ -86,7 +86,8 @@ void peer::recv_thread()
 }
 
 void peer::close()
-{
+{	
+	shutdown(peer_fd, SHUT_RDWR);
 	::close(peer_fd);
 	sendq.set_finish_flag();
 	peer_fd = INVALID_SOCKET;
