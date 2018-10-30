@@ -42,7 +42,7 @@ protected:
 	struct proto_header
 	{
 		uint64_t m_signature;
-		uint64_t m_cb;
+		uint64_t m_datal_len;
 		bool m_have_to_return_data;
 		uint32_t m_command;
 		int32_t m_return_code;

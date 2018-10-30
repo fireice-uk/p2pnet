@@ -62,52 +62,6 @@ void peer::recv_thread()
 
 		std::cout << "RECEIVED DATA: " << (char *)buffer.get() << " LENGTH: " << reclen << std::endl;
 	}
-  constexpr size_t buflen = 256 * 1024;
-  constexpr size_t msglen = 1024;
-  std::unique_ptr<uint8_t[]> buffer(new uint8_t[buflen]);
-  std::unique_ptr<uint8_t[]> msg(new uint8_t[msglen]);
-  size_t bufpos = 0;
-
-  while(peer_fd != INVALID_SOCKET)
-  {
-    //int reclen = recv(peer_fd, (char*)buffer.get()+bufpos, buflen-bufpos, 0);
-    int reclen = recv(peer_fd, (char*)msg.get(), msglen, 0);
- 
-
-    if(reclen == 0)
-    {
-      //CONNECTION LOST
-      std::cout << "PEER: " << peer_fd << " DISCONNECTED" << std::endl;
-      ::close(peer_fd);
-      peer_fd = INVALID_SOCKET;
-      break;
-    }
-    else if(reclen < 0)
-    {
-      //ERROR
-      std::cout << "RECV ERROR - PEER: " << peer_fd << std::endl;
-      ::close(peer_fd);
-      peer_fd = INVALID_SOCKET;
-      break;
-    }
-    else
-    {	
-      while(false /*serialzie(msg) == false*/)
-      {	
-	//Read more data
-	reclen += recv(peer_fd, (char*)msg.get()+reclen, msglen-reclen, 0);
-      }
-           
-      if(reclen + bufpos < buflen)
-      {
-	std::cout << "RECEIVED MESSAGE: " << (char*)msg.get() << " LENGTH: " << reclen << std::endl;
-	memcpy((char*)buffer.get()+bufpos, (char*)msg.get(), reclen);
-	bufpos += reclen;
-      }
-      else
-	std::cout << "CAN NOT APPEND MESSAGE: " << (char*)msg.get() << " BUFFER OVERFLOW" << std::endl;
-    }
-  }
 }
 
 void peer::close()

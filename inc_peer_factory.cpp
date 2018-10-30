@@ -104,7 +104,23 @@ void inc_peer_factory::thread_accept()
 		else
 		{
 			std::cout << "ACCEPTED" << std::endl;
-			peers.emplace_back(peer_fd, &tmpaddr);
+			ip_port_addr peeraddr;
+			if(tmpaddr.sin6_family == AF_INET)
+			{
+				peeraddr.is_ip4 = true;
+				peeraddr.ip4.sin_family = AF_INET;
+				peeraddr.ip4.sin_port = tmpaddr.sin6_port;
+				//TODO
+				//peeraddr.ip4.sin_addr.s_addr = tmpaddr.sin6_addr.s6_addr;
+			}
+			else
+			{
+				peeraddr.is_ip4 = false;
+				peeraddr.ip6 = tmpaddr;
+			}
+			peeraddr.ip6 = tmpaddr;
+			peers.emplace_back(peer_fd, peeraddr);
+			
 
 			//SEND DATA TEST
 			std::vector<u_int8_t> msg;

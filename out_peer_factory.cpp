@@ -60,33 +60,7 @@ out_peer_factory::sock_data* out_peer_factory::connect_dns(sock_data &out, const
 			break;
 		}
 		reslist = reslist->ai_next;
-
-      hint.ai_family = AF_UNSPEC;			
-      hint.ai_socktype = SOCK_STREAM;		
-      //hint.ai_flags = AI_PASSIVE; 
-      hint.ai_protocol = 0;	
-      int err = getaddrinfo(_addr, _port, &hint, &res);
-      if (err != 0)	
-      {
-	std::cout << "GET ADDR INFO ERROR OUTPEER FAC " << _addr << " : " << _port << std::endl; 
-      }
-
-			
-      addrinfo *reslist = res;
-      std::vector<sockaddr_in> addr;
-      std::vector<sockaddr_in6> addr6;
-      while (reslist != nullptr)		
-      {		
-	switch (reslist->ai_family)			
-	{		
-	  case AF_INET:				
-	    addr.push_back(*reinterpret_cast<sockaddr_in*>(reslist->ai_addr));				
-	    break;
-	    
-	  case AF_INET6:			
-	    addr6.push_back(*reinterpret_cast<sockaddr_in6*>(reslist->ai_addr));				
-	    break;				
-	}
+	}	
 	freeaddrinfo(res);
 
 	if(addr.empty() && addr6.empty())
@@ -191,7 +165,7 @@ void out_peer_factory::connect_peers(size_t n)
 
 void out_peer_factory::async_connect_wait(std::list<std::future<sock_data*>>& thds)
 {
-<<<<<<< Updated upstream
+
 	auto it = thds.begin();
 	while (it != thds.end())
 	{
@@ -207,24 +181,6 @@ void out_peer_factory::async_connect_wait(std::list<std::future<sock_data*>>& th
 		else
 			it++;
 	}
-=======
-  sock_data s;
-  connect_dns(s, "127.0.0.1:12210");
-  if(s.sock != INVALID_SOCKET)
-  {
-    if(s.ip4)
-      peers.emplace_back(s.sock, &s.addr4);
-    else
-      peers.emplace_back(s.sock, &s.addr6);
-    
-      //SEND DATA TEST
-      std::vector<u_int8_t> msg;
-      msg.push_back('W');
-      msg.push_back('W');
-      msg.push_back('E');
-      peers.back().send_data(std::move(msg));
-  }
->>>>>>> Stashed changes
 }
 
 void out_peer_factory::connect_seeds()
