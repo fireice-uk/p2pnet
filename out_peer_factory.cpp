@@ -133,7 +133,7 @@ out_peer_factory::sock_data* out_peer_factory::connect(sock_data &out, ip_port_a
 
 	if(addr.is_ip4)
 	{
-		if(::connect(peer_fd, (sockaddr *)&addr, sizeof(sockaddr_in)) == 0)
+		if(::connect(peer_fd, (sockaddr *)&addr.ip4, sizeof(sockaddr_in)) == 0)
 		{
 			out.sock = peer_fd;
 			out.addr = addr;
@@ -142,10 +142,11 @@ out_peer_factory::sock_data* out_peer_factory::connect(sock_data &out, ip_port_a
 	}
 	else
 	{
-		if(::connect(peer_fd, (sockaddr *)&addr, sizeof(sockaddr_in6)) == 0)
+		if(::connect(peer_fd, (sockaddr *)&addr.ip6, sizeof(sockaddr_in6)) == 0)
 		{
 			out.sock = peer_fd;
 			out.addr = addr;
+			
 			return &out;
 		}
 	}
@@ -158,9 +159,12 @@ out_peer_factory::sock_data* out_peer_factory::connect(sock_data &out, ip_port_a
 void out_peer_factory::connect_peers(size_t n)
 {
 	sock_data s;
-	connect_dns(s, "localhost:1111");
+	connect_dns(s, "127.0.0.1:1111");
 	if(s.sock != INVALID_SOCKET)
+	{
 		peers.emplace_back(s.sock, s.addr);
+		peers.back().send_handshake();
+	}
 }
 
 void out_peer_factory::async_connect_wait(std::list<std::future<sock_data*>>& thds)

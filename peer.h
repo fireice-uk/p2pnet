@@ -35,6 +35,7 @@ public:
 	peer(SOCKET peer_fd, const ip_port_addr& addr);
 	void close();
 	void send_data(std::vector<uint8_t> &&data) { sendq.push(std::move(data)); }
+	void send_handshake();
 
 protected:
 #pragma pack(push)

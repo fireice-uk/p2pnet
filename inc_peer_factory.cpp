@@ -120,12 +120,6 @@ void inc_peer_factory::thread_accept()
 			}
 			peeraddr.ip6 = tmpaddr;
 			peers.emplace_back(peer_fd, peeraddr);
-			
-
-			//SEND DATA TEST
-			std::vector<u_int8_t> msg;
-			msg.push_back('W');
-			peers.back().send_data(std::move(msg));
 		}
 	}
 }
