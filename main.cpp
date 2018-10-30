@@ -37,7 +37,7 @@ int main()
 	std::cout << "Listen Port: ";
 	std::cin >> port;
 	inc_peer_factory incfac;
-	incfac.start(interptr, port);
+	//incfac.start(interptr, port);
 
 
 	sleep(0.5f);

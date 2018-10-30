@@ -51,6 +51,7 @@ void peer::recv_thread()
 	while(peer_fd != INVALID_SOCKET)
 	{
 		int reclen = recv(peer_fd, (char *)buffer.get() + bufpos, buflen - bufpos, 0);
+		
 		bufpos += reclen;
 
 		if(reclen <= 0)
@@ -62,30 +63,32 @@ void peer::recv_thread()
 			break;
 		}
 		
-		
-		if(bufpos >= sizeof(proto_header) && headptr == nullptr)
-		{	
-			
-			headptr = new proto_header;
-			memcpy(headptr, buffer.get(), sizeof(proto_header));
-			std::cout << "DATA LEN: " << headptr->m_datal_len << std::endl;
+		while(bufpos > 0)
+		{
+			if(bufpos >= sizeof(proto_header) && headptr == nullptr)
+			{	
+				
+				headptr = new proto_header;
+				memcpy(headptr, buffer.get(), sizeof(proto_header));
+				std::cout << "DATA LEN: " << headptr->m_datal_len << std::endl;
 
-			memcpy(buffer.get(), buffer.get() + sizeof(proto_header),  (bufpos -= sizeof(proto_header)));
-		}
-		
-		if(headptr != nullptr)
-		{	
-			if(bufpos >= headptr->m_datal_len)
-			{
-				char msg[headptr->m_datal_len+1];
-				memcpy(&msg, buffer.get(), headptr->m_datal_len);
-				msg[headptr->m_datal_len] = '\0';
-				std::cout << "RECEIVED DATA: " << msg << std::endl;
-				
-				memcpy(buffer.get(), buffer.get() + headptr->m_datal_len,  (bufpos -= headptr->m_datal_len));
-				
-				delete headptr;
-				headptr = nullptr;
+				memcpy(buffer.get(), buffer.get() + sizeof(proto_header),  (bufpos -= sizeof(proto_header)));
+			}
+			
+			if(headptr != nullptr)
+			{	
+				if(bufpos >= headptr->m_datal_len)
+				{
+					char msg[headptr->m_datal_len+1];
+					memcpy(&msg, buffer.get(), headptr->m_datal_len);
+					msg[headptr->m_datal_len] = '\0';
+					std::cout << "RECEIVED DATA: " << msg << std::endl;
+					
+					memcpy(buffer.get(), buffer.get() + headptr->m_datal_len,  (bufpos -= headptr->m_datal_len));
+					
+					delete headptr;
+					headptr = nullptr;
+				}
 			}
 		}
 	}
@@ -99,7 +102,7 @@ void peer::send_handshake()
 	
 	sendh.m_signature = 0;
 	sendh.m_datal_len = 10;
-	sendh.m_have_to_return_data = false;
+	sendh.m_have_to_return_data = true;
 	sendh.m_command = 0;
 	sendh.m_return_code;
 	sendh.m_flags = 0;
