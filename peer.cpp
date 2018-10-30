@@ -46,6 +46,7 @@ void peer::recv_thread()
 	constexpr size_t buflen = 256 * 1024;
 	std::unique_ptr<uint8_t[]> buffer(new uint8_t[buflen]);
 	size_t bufpos = 0;
+	proto_header *headptr = nullptr;
 
 	while(peer_fd != INVALID_SOCKET)
 	{
@@ -61,36 +62,32 @@ void peer::recv_thread()
 			break;
 		}
 		
-		//RECV HEADER
-		while(reclen < sizeof(proto_header))
-		{
-			reclen += recv(peer_fd, (char *)buffer.get()+bufpos, sizeof(proto_header)-reclen, 0);
-			bufpos += reclen;
-		} 
 		
-		//TODO UNSERIALIZE
-		proto_header recvh;
-		memcpy(&recvh, (buffer.get() + bufpos - sizeof(recvh)), sizeof(recvh));
+		if(bufpos >= sizeof(proto_header) && headptr == nullptr)
+		{	
+			
+			headptr = new proto_header;
+			memcpy(headptr, buffer.get(), sizeof(proto_header));
+			std::cout << "DATA LEN: " << headptr->m_datal_len << std::endl;
+
+			memcpy(buffer.get(), buffer.get() + sizeof(proto_header),  (bufpos -= sizeof(proto_header)));
+		}
+		
+		if(headptr != nullptr)
+		{	
+			if(bufpos >= headptr->m_datal_len)
+			{
+				char msg[headptr->m_datal_len+1];
+				memcpy(&msg, buffer.get(), headptr->m_datal_len);
+				msg[headptr->m_datal_len] = '\0';
+				std::cout << "RECEIVED DATA: " << msg << std::endl;
 				
-		if(recvh.m_datal_len + bufpos >= buflen)
-		{
-			std::cout << "ERROR RECEIVE DATA OVERFLOW: " << recvh.m_datal_len << std::endl;
-			//drop current message
-			break;
+				memcpy(buffer.get(), buffer.get() + headptr->m_datal_len,  (bufpos -= headptr->m_datal_len));
+				
+				delete headptr;
+				headptr = nullptr;
+			}
 		}
-		
-		//READ DATA
-		reclen = 0;
-		while(reclen < recvh.m_datal_len)
-		{
-			reclen += recv(peer_fd, (char *)buffer.get() + bufpos, recvh.m_datal_len-reclen, 0);
-			bufpos += reclen;
-		}
-		
-		char cmsg[recvh.m_datal_len+1];
-		memcpy(&cmsg, buffer.get() + bufpos - recvh.m_datal_len, recvh.m_datal_len);
-		cmsg[recvh.m_datal_len] = '\0';
-		std::cout << "RECEIVED DATA: " << cmsg << std::endl;
 	}
 }
 
