@@ -17,43 +17,39 @@
 #pragma once
 
 #include "peer.h"
+#include <future>
 
-template<typename T, std::size_t N>
+template <typename T, std::size_t N>
 constexpr std::size_t countof(T const (&)[N]) noexcept
 {
-  return N;
+	return N;
 }
 
-static const char* dns_seeds[] = {
-  "127.0.0.1:3333"
-};
+static const char *dns_seeds[] = {
+	"127.0.0.1:3333"};
 
 class out_peer_factory
 {
-private:
-  struct sock_data
-  {
-    SOCKET sock = INVALID_SOCKET;
-    sockaddr_in addr4;
-    sockaddr_in6 addr6;
-    bool ip4;
-  };
-
 public:
-	
-  out_peer_factory();
-  static void connect_dns(sock_data& out, const char* full_addr);
-  static void connect_ip(sock_data& out, const char *saddr, uint16_t port);
-  static void connect4(sock_data& out, sockaddr_in addr);
-  static void connect6(sock_data& out, sockaddr_in6 addr);
-	  
-  void connect_peers(size_t n);
-  void connect_seeds();
-  void stop_peers();
-	
-protected:
+	out_peer_factory();
 
-  std::list<peer> peers;
+	void connect_peers(size_t n);
+	void connect_seeds();
+	void stop_peers();
+
+private:
+	struct sock_data
+	{
+		SOCKET sock = INVALID_SOCKET;
+		ip_port_addr addr;
+	};
+
+	static sock_data* connect_dns(sock_data &out, const char *full_addr);
+	static sock_data* connect_ip(sock_data &out, const char *saddr, uint16_t port);
+	static sock_data* connect(sock_data &out, ip_port_addr addr);
+
+	void async_connect_wait(std::list<std::future<sock_data*>>& thds);
+	std::list<peer> peers;
 };
 
 #endif /* OUT_PEER_FACTORY_H */
