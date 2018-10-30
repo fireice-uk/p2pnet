@@ -70,11 +70,11 @@ void peer::recv_thread()
 		
 		//TODO UNSERIALIZE
 		proto_header recvh;
-		memcpy(&recvh, (char*)(buffer.get() + bufpos - sizeof(recvh)), sizeof(recvh));
+		memcpy(&recvh, (buffer.get() + bufpos - sizeof(recvh)), sizeof(recvh));
 				
 		if(recvh.m_datal_len + bufpos >= buflen)
 		{
-			std::cout << "ERROR RECEIVE DATA OVERFLOW: " << recvh.m_datal_len + bufpos << std::endl;
+			std::cout << "ERROR RECEIVE DATA OVERFLOW: " << recvh.m_datal_len << std::endl;
 			//drop current message
 			break;
 		}
