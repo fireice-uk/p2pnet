@@ -13,20 +13,8 @@
 
 #include "peer.h"
 
-peer::peer(SOCKET _peer_fd, const sockaddr_in *addr) : peer_fd(_peer_fd)
+peer::peer(SOCKET peer_fd, const ip_port_addr& addr) : peer_fd(peer_fd), addr(addr)
 {
-	memcpy(&ip4_addr, addr, sizeof(sockaddr_in));
-	memset(&ip6_addr, 0, sizeof(sockaddr_in6));
-
-	t_send = std::thread(&peer::send_thread, this);
-	t_recv = std::thread(&peer::recv_thread, this);
-}
-
-peer::peer(SOCKET _peer_fd, const sockaddr_in6 *addr) : peer_fd(_peer_fd)
-{
-	memcpy(&ip6_addr, addr, sizeof(sockaddr_in6));
-	memset(&ip4_addr, 0, sizeof(sockaddr_in));
-
 	t_send = std::thread(&peer::send_thread, this);
 	t_recv = std::thread(&peer::recv_thread, this);
 }
@@ -63,7 +51,7 @@ void peer::recv_thread()
 	{
 		int reclen = recv(peer_fd, (char *)buffer.get() + bufpos, buflen - bufpos, 0);
 
-		if(reclen == 0)
+		if(reclen <= 0)
 		{
 			//CONNECTION LOST
 			std::cout << "PEER: " << peer_fd << " DISCONNECTED" << std::endl;
@@ -71,14 +59,7 @@ void peer::recv_thread()
 			peer_fd = INVALID_SOCKET;
 			break;
 		}
-		else if(reclen < 0)
-		{
-			//ERROR
-			std::cout << "RECV ERROR - PEER: " << peer_fd << std::endl;
-			::close(peer_fd);
-			peer_fd = INVALID_SOCKET;
-			break;
-		}
+
 		std::cout << "RECEIVED DATA: " << (char *)buffer.get() << " LENGTH: " << reclen << std::endl;
 	}
 }

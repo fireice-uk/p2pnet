@@ -22,7 +22,7 @@ inc_peer_factory::~inc_peer_factory()
 	stop();
 }
 
-void inc_peer_factory::start(const char *saddr, uint16_t port, int backlog)
+bool inc_peer_factory::start(const char *saddr, uint16_t port, int backlog)
 {
 	int domain;
 
@@ -49,50 +49,43 @@ void inc_peer_factory::start(const char *saddr, uint16_t port, int backlog)
 		domain = PF_INET;
 	}
 	else
-	{
-		//ERROR
-		std::cout << "UNRECOGNIZED INTERFACE - INC PEER FAC" << std::endl;
-	}
+		return false;
 
 	if((listen_fd = socket(domain, SOCK_STREAM, 0)) == INVALID_SOCKET)
-	{
-		//ERROR
-		std::cout << "CAN NOT OPEN SOCKET - INC PEER FAC" << std::endl;
-	}
-	else
-	{
-		SOCK_OPT on = OPT_YES;
-		if(setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) != 0)
-		{
-			std::cout << "SETSOCKOPT ERROR - INC PEER FAC" /*<< strerror(errno)*/ << std::endl;
-		}
+		return false;
 
-		if(bind(listen_fd, (sockaddr *)&laddr6, addrlen) != 0)
-		{
-			std::cout << "CAN NOT BIND SOCKET - INC PEER FAC" << std::endl;
-			close(listen_fd);
-			listen_fd = INVALID_SOCKET;
-		}
-		else
-		{
-			if(listen(listen_fd, backlog) == 0)
-			{
-				//DISPLAY LISTEN INTERFACE
-				socklen_t tmplen = sizeof(laddr6);
-				char ipstr[INET6_ADDRSTRLEN];
-				inet_ntop(AF_INET, &(laddr6.sin6_addr), ipstr, INET6_ADDRSTRLEN);
-				getsockname(listen_fd, (sockaddr *)&laddr6, &tmplen);
-				std::cout << "LISTENING ON: INTERFACE: " << ipstr << " : PORT: " << ntohs(laddr6.sin6_port) << std::endl;
-
-				accept_thread = std::thread(&inc_peer_factory::thread_accept, this);
-			}
-			else
-			{
-				//ERROR
-				std::cout << "CAN NOT LISTEN - INC PEER FAC" << std::endl;
-			}
-		}
+	
+	SOCK_OPT on = OPT_YES;
+	if(setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) != 0)
+	{
+		std::cout << "SETSOCKOPT ERROR - INC PEER FAC" /*<< strerror(errno)*/ << std::endl;
 	}
+
+	if(bind(listen_fd, (sockaddr *)&laddr6, addrlen) != 0)
+	{
+		std::cout << "CAN NOT BIND SOCKET - INC PEER FAC" << std::endl;
+		close(listen_fd);
+		listen_fd = INVALID_SOCKET;
+		return false;
+	}
+	
+
+	if(listen(listen_fd, backlog) != 0)
+	{
+		std::cout << "CAN NOT BIND SOCKET - INC PEER FAC" << std::endl;
+		close(listen_fd);
+		listen_fd = INVALID_SOCKET;
+		return false;
+	}
+
+	//DISPLAY LISTEN INTERFACE
+	socklen_t tmplen = sizeof(laddr6);
+	char ipstr[INET6_ADDRSTRLEN];
+	inet_ntop(AF_INET, &(laddr6.sin6_addr), ipstr, INET6_ADDRSTRLEN);
+	getsockname(listen_fd, (sockaddr *)&laddr6, &tmplen);
+	std::cout << "LISTENING ON: INTERFACE: " << ipstr << " : PORT: " << ntohs(laddr6.sin6_port) << std::endl;
+
+	accept_thread = std::thread(&inc_peer_factory::thread_accept, this);
 }
 
 void inc_peer_factory::thread_accept()
@@ -125,7 +118,7 @@ void inc_peer_factory::stop()
 {
 	if(listen_fd != INVALID_SOCKET)
 	{
-		shutdown(listen_fd, SD_BOTH); // THIS BREAK ACCEPT
+		shutdown(listen_fd, SD_BOTH);
 		close(listen_fd);
 		listen_fd = INVALID_SOCKET;
 	}
