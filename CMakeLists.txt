@@ -8,10 +8,24 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
-
-add_executable(p2pnet peer.cpp out_peer_factory.cpp inc_peer_factory.cpp CMakeLists.txt main.cpp)
+add_executable(p2pnet cryptonote_basics/account.cpp device/device_default.cpp device/device.cpp src/cryptonote_config.cpp epee/src/memwipe.c epee/src/hex.cpp serialization/json_object.cpp peer.cpp out_peer_factory.cpp inc_peer_factory.cpp CMakeLists.txt main.cpp)
 
 find_package(Threads REQUIRED)
-target_link_libraries(p2pnet Threads::Threads)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
+
+target_link_libraries(p2pnet 
+	Threads::Threads
+	${Boost_FILESYSTEM_LIBRARY}
+	${Boost_SYSTEM_LIBRARY}
+)
 
 install(TARGETS p2pnet RUNTIME DESTINATION bin)
+
+add_subdirectory(p2p)
+add_subdirectory(epee)
+add_subdirectory(serialization)
+add_subdirectory(common)
+add_subdirectory(cryptonote_basics)
+add_subdirectory(crypto)
+add_subdirectory(src)
+add_subdirectory(device)

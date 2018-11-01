@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <time.h>
 #include <unistd.h>
+#include "p2p/p2p_protocol_defs.h"
 
 //using namespace std;
 
@@ -24,8 +25,10 @@ int main()
 
 	srand(std::time(NULL));
 	wsock_init();
-
-	char inter[128];
+	
+	nodetool::COMMAND_HANDSHAKE_T<int> cht;
+	
+	/*char inter[128];
 	char *interptr = inter;
 	std::cout << "Listen Interface(0 for null): ";
 	std::cin >> inter;
@@ -64,7 +67,7 @@ int main()
 	incfac.stop_peers();
 	incfac.stop();
 	outfac.stop_peers();
-
+    */
 	wsock_cleaup();
 
 	return 0;

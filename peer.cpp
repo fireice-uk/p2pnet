@@ -51,7 +51,7 @@ void peer::recv_thread()
 	while(peer_fd != INVALID_SOCKET)
 	{
 		int reclen = recv(peer_fd, (char *)buffer.get() + bufpos, buflen - bufpos, 0);
-		
+		std::cout << "RECV: " << reclen << std::endl;
 		bufpos += reclen;
 
 		if(reclen <= 0)

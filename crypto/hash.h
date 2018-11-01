@@ -46,69 +46,71 @@
 
 #pragma once
 
-#include <vector>
+#include <boost/utility/value_init.hpp>
+#include <iostream>
+#include <stddef.h>
 
-//#include "crypto/chacha.h"
-//#include "crypto/crypto.h"
-//#include "crypto/hash.h"
-#include "debug_archive.h"
-#include "serialization.h"
+#include "../common/pod-class.h"
+#include "generic-ops.h"
+#include "../epee/include/hex.h"
+#include "../epee/include/span.h"
 
-// read
-template <template <bool> class Archive>
-bool do_serialize(Archive<false> &ar, std::vector<crypto::signature> &v)
+namespace crypto
 {
-	size_t cnt = v.size();
-	v.clear();
 
-	// very basic sanity check
-	if(ar.remaining_bytes() < cnt * sizeof(crypto::signature))
-	{
-		ar.stream().setstate(std::ios::failbit);
-		return false;
-	}
-
-	v.reserve(cnt);
-	for(size_t i = 0; i < cnt; i++)
-	{
-		v.resize(i + 1);
-		ar.serialize_blob(&(v[i]), sizeof(crypto::signature), "");
-		if(!ar.stream().good())
-			return false;
-	}
-	return true;
+extern "C" {
+#include "hash-ops.h"
 }
 
-// write
-template <template <bool> class Archive>
-bool do_serialize(Archive<true> &ar, std::vector<crypto::signature> &v)
+#pragma pack(push, 1)
+POD_CLASS hash
 {
-	if(0 == v.size())
-		return true;
-	ar.begin_string();
-	size_t cnt = v.size();
-	for(size_t i = 0; i < cnt; i++)
-	{
-		ar.serialize_blob(&(v[i]), sizeof(crypto::signature), "");
-		if(!ar.stream().good())
-			return false;
-	}
-	ar.end_string();
-	return true;
+	char data[HASH_SIZE];
+};
+POD_CLASS hash8
+{
+	char data[8];
+};
+#pragma pack(pop)
+
+static_assert(sizeof(hash) == HASH_SIZE, "Invalid structure size");
+static_assert(sizeof(hash8) == 8, "Invalid structure size");
+
+/*
+    Cryptonight hash functions
+  */
+
+inline void cn_fast_hash(const void *data, std::size_t length, hash &hash)
+{
+	cn_fast_hash(data, length, reinterpret_cast<char *>(&hash));
 }
 
-BLOB_SERIALIZER(crypto::chacha_iv);
-BLOB_SERIALIZER(crypto::hash);
-BLOB_SERIALIZER(crypto::hash8);
-BLOB_SERIALIZER(crypto::public_key);
-BLOB_SERIALIZER(crypto::secret_key);
-BLOB_SERIALIZER(crypto::key_derivation);
-BLOB_SERIALIZER(crypto::key_image);
-BLOB_SERIALIZER(crypto::signature);
-VARIANT_TAG(debug_archive, crypto::hash, "hash");
-VARIANT_TAG(debug_archive, crypto::hash8, "hash8");
-VARIANT_TAG(debug_archive, crypto::public_key, "public_key");
-VARIANT_TAG(debug_archive, crypto::secret_key, "secret_key");
-VARIANT_TAG(debug_archive, crypto::key_derivation, "key_derivation");
-VARIANT_TAG(debug_archive, crypto::key_image, "key_image");
-VARIANT_TAG(debug_archive, crypto::signature, "signature");
+inline hash cn_fast_hash(const void *data, std::size_t length)
+{
+	hash h;
+	cn_fast_hash(data, length, reinterpret_cast<char *>(&h));
+	return h;
+}
+
+inline void tree_hash(const hash *hashes, std::size_t count, hash &root_hash)
+{
+	tree_hash(reinterpret_cast<const char(*)[HASH_SIZE]>(hashes), count, reinterpret_cast<char *>(&root_hash));
+}
+
+inline std::ostream &operator<<(std::ostream &o, const crypto::hash &v)
+{
+	epee::to_hex::formatted(o, epee::as_byte_span(v));
+	return o;
+}
+inline std::ostream &operator<<(std::ostream &o, const crypto::hash8 &v)
+{
+	epee::to_hex::formatted(o, epee::as_byte_span(v));
+	return o;
+}
+
+const static crypto::hash null_hash = boost::value_initialized<crypto::hash>();
+const static crypto::hash8 null_hash8 = boost::value_initialized<crypto::hash8>();
+}
+
+CRYPTO_MAKE_HASHABLE(hash)
+CRYPTO_MAKE_COMPARABLE(hash8)

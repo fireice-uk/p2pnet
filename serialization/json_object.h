@@ -44,12 +44,12 @@
 
 #pragma once
 
-#include "common/sfinae_helpers.h"
-#include "cryptonote_basic/cryptonote_basic.h"
-#include "cryptonote_protocol/cryptonote_protocol_defs.h"
+#include "../common/sfinae_helpers.h"
+#include "../cryptonote_basic/cryptonote_basic.h"
+//#include "cryptonote_protocol/cryptonote_protocol_defs.h"
 #include "rapidjson/document.h"
 #include "rpc/message_data_structs.h"
-#include "string_tools.h"
+//#include "string_tools.h"
 
 #define OBJECT_HAS_MEMBER_OR_THROW(val, key)          \
 	do                                                \

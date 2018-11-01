@@ -54,12 +54,12 @@
 #include <iostream>
 #include <iterator>
 
-#include "common/varint.h"
-#include "warnings.h"
+//#include "common/varint.h"
+//#include "warnings.h"
 
 /* I have no clue what these lines means */
-PUSH_WARNINGS
-DISABLE_VS_WARNINGS(4244)
+//PUSH_WARNINGS
+//DISABLE_VS_WARNINGS(4244)
 
 //TODO: fix size_t warning in x32 platform
 
@@ -114,7 +114,7 @@ struct binary_archive<false> : public binary_archive_base<std::istream, false>
 {
 
 	explicit binary_archive(stream_type &s) : base_type(s)
-	{
+	{	
 		stream_type::streampos pos = stream_.tellg();
 		stream_.seekg(0, std::ios_base::end);
 		eof_pos_ = stream_.tellg();
@@ -251,4 +251,4 @@ struct binary_archive<true> : public binary_archive_base<std::ostream, true>
 	}
 };
 
-POP_WARNINGS
+//POP_WARNINGS
