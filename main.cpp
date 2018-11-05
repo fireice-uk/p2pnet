@@ -17,6 +17,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <sstream>
+#include <iostream> 
+#include <iomanip> 
+#include <string> 
 #include "p2p/p2p_protocol_defs.h"
 #include "serialization/serialization.h"
 #include "serialization/binary_archive.h"
@@ -85,12 +88,35 @@ int main()
 	arg.node_data.network_id = boost::uuids::random_generator()();
 	
 	//GET PAYLOAD SYNC DATA
-	CORE_SYNC_DATA hshd = boost::value_initialized<CORE_SYNC_DATA>();
-	//NULL HASH
 	arg.payload_data.top_id = boost::value_initialized<key>();
 	arg.payload_data.top_version = 0;
 	arg.payload_data.cumulative_difficulty = 1;
 	arg.payload_data.current_height = 1;
+	
+	
+	const unsigned char* data = (unsigned char *)&arg;
+	int size = sizeof(arg);
+	// Fill characters 
+	std::ostringstream op;
+	std::ostream::fmtflags old_flags = op.flags();  
+	char old_fill  = op.fill(); 
+	op << std::hex << std::setfill('0'); 
+	
+	for (int i = 0; i < size; i++) 
+	{ 
+	    // Give space between two hex values 
+	    if (i>0) 
+		op << ' '; 
+	    if(i % 8 == 0)
+	      op << "\n";
+	    // force output to use hex version of ascii code 
+	    op << std::setw(2) << static_cast<int>(data[i]); 
+	} 
+      
+	op.flags(old_flags); 
+	op.fill(old_fill);
+	
+	std::cout << "DATA LENGTH: " << size << " : " << std::endl << op.str() << std::endl << std::endl;
 	
 	/*char inter[128];
 	char *interptr = inter;
@@ -131,7 +157,9 @@ int main()
 	incfac.stop_peers();
 	incfac.stop();
 	outfac.stop_peers();
-    */
+    */	
+	std::cout << "Press enter to continue..." << std::endl;
+	std::cin.get();
 	wsock_cleaup();
 
 	return 0;
