@@ -28,97 +28,13 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include "cryptonote_basic/blobdatatype.h"
 
-
-
-//using namespace std;
-struct key
-{
-	unsigned char &operator[](int i)
-	{
-		return bytes[i];
-	}
-	unsigned char operator[](int i) const
-	{
-		return bytes[i];
-	}
-	bool operator==(const key &k) const { return !memcmp(bytes, k.bytes, sizeof(bytes)); }
-	unsigned char bytes[32];
-};
-
-struct CORE_SYNC_DATA
-{
-	uint64_t current_height;
-	uint64_t cumulative_difficulty;
-	key top_id;
-	uint8_t top_version;
-
-	BEGIN_KV_SERIALIZE_MAP()
-	KV_SERIALIZE(current_height)
-	KV_SERIALIZE(cumulative_difficulty)
-	KV_SERIALIZE_VAL_POD_AS_BLOB(top_id)
-	KV_SERIALIZE_OPT(top_version, (uint8_t)0)
-	END_KV_SERIALIZE_MAP()
-};
-
-
 int main()
 {
 
 	srand(std::time(NULL));
 	wsock_init();
 	
-	/*
-	nodetool::COMMAND_HANDSHAKE_T<std::string> cmhs;
-	std::stringstream ss;
-	binary_archive<true> ba(ss);
-	bool r = ::serialization::serialize(ba, const_cast<nodetool::COMMAND_HANDSHAKE_T<std::string> &>(cmhs));
-	if(r)
-	{
-		std::cout  <<  ss.str() << std::endl;; 
-	}*/
-	
-	nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::request arg;
-	//nodetool::COMMAND_HANDSHAKE_T::response rsp;
-	
-	time_t local_time;
-	time(&local_time);
-	arg.node_data.local_time = local_time;
-	arg.node_data.peer_id = 0;
-	arg.node_data.my_port = 1111;
-	arg.node_data.network_id = boost::uuids::random_generator()();
-	
-	//GET PAYLOAD SYNC DATA
-	arg.payload_data.top_id = boost::value_initialized<key>();
-	arg.payload_data.top_version = 0;
-	arg.payload_data.cumulative_difficulty = 1;
-	arg.payload_data.current_height = 1;
-	
-	
-	const unsigned char* data = (unsigned char *)&arg;
-	int size = sizeof(arg);
-	// Fill characters 
-	std::ostringstream op;
-	std::ostream::fmtflags old_flags = op.flags();  
-	char old_fill  = op.fill(); 
-	op << std::hex << std::setfill('0'); 
-	
-	for (int i = 0; i < size; i++) 
-	{ 
-	    // Give space between two hex values 
-	    if (i>0) 
-		op << ' '; 
-	    if(i % 8 == 0)
-	      op << "\n";
-	    // force output to use hex version of ascii code 
-	    op << std::setw(2) << static_cast<int>(data[i]); 
-	} 
-      
-	op.flags(old_flags); 
-	op.fill(old_fill);
-	
-	std::cout << "DATA LENGTH: " << size << " : " << std::endl << op.str() << std::endl << std::endl;
-	
-	/*char inter[128];
+	char inter[128];
 	char *interptr = inter;
 	std::cout << "Listen Interface(0 for null): ";
 	std::cin >> inter;
@@ -157,9 +73,7 @@ int main()
 	incfac.stop_peers();
 	incfac.stop();
 	outfac.stop_peers();
-    */	
-	std::cout << "Press enter to continue..." << std::endl;
-	std::cin.get();
+   	
 	wsock_cleaup();
 
 	return 0;

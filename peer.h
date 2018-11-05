@@ -25,9 +25,59 @@
 #include <sys/types.h>
 #include <thread>
 #include <vector>
-
+#include <cstdlib>
+#include <time.h>
+#include <unistd.h>
+#include <sstream>
+#include <iomanip> 
+#include <string> 
+#include <bitset>
+#include "p2p/p2p_protocol_defs.h"
+#include "serialization/serialization.h"
+#include "serialization/binary_archive.h"
+#include "cryptonote_basic/blobdatatype.h"
+#include "epee/storages/portable_storage_template_helper.h"
+#include <boost/uuid/uuid_generators.hpp>
+#include "cryptonote_basic/blobdatatype.h"
 #include "sock.h"
 #include "thdq.hpp"
+
+//Bender's nightmare
+#define LEVIN_OK 0
+#define LEVIN_PACKET_REQUEST 0x00000001
+#define LEVIN_PROTOCOL_VER_1 1
+
+
+//using namespace std;
+struct key
+{
+	unsigned char &operator[](int i)
+	{
+		return bytes[i];
+	}
+	unsigned char operator[](int i) const
+	{
+		return bytes[i];
+	}
+	bool operator==(const key &k) const { return !memcmp(bytes, k.bytes, sizeof(bytes)); }
+	unsigned char bytes[32];
+};
+
+struct CORE_SYNC_DATA
+{
+	uint64_t current_height;
+	uint64_t cumulative_difficulty;
+	key top_id;
+	uint8_t top_version;
+
+	BEGIN_KV_SERIALIZE_MAP()
+	KV_SERIALIZE(current_height)
+	KV_SERIALIZE(cumulative_difficulty)
+	KV_SERIALIZE_VAL_POD_AS_BLOB(top_id)
+	KV_SERIALIZE_OPT(top_version, (uint8_t)0)
+	END_KV_SERIALIZE_MAP()
+};
+
 
 class peer
 {
@@ -53,6 +103,7 @@ protected:
 #pragma pack(pop)
 
 	static constexpr uint64_t LEVIN_SIGNATURE = 0x0101010101012101LL;
+	//static constexpr uint64_t LEVIN_SIGNATURE = 0x01011101;
 
 	SOCKET peer_fd;
 	ip_port_addr addr;

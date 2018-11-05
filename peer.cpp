@@ -97,16 +97,59 @@ void peer::recv_thread()
 void peer::send_handshake()
 {
 	proto_header sendh;
-	char sendd[10] = "123456789";
+	const unsigned char* sendd;
 	std::vector<uint8_t> sendv;
 	
-	sendh.m_signature = 0;
-	sendh.m_datal_len = 10;
+	nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::request arg;
+	//nodetool::COMMAND_HANDSHAKE_T::response rsp;
+	
+	time_t local_time;
+	time(&local_time);
+	arg.node_data.local_time = local_time;
+	arg.node_data.peer_id = rand() %  100;
+	arg.node_data.my_port = 0;
+	arg.node_data.network_id =  { { 0xcd, 0xac, 0x50, 0x2e, 0xb3, 0x74, 0x8f, 0xf2, 0x0f, 0xb7, 0x72, 0x18, 0x0f, 0x73, 0x24, 0x13 } }; 
+	
+	//GET PAYLOAD SYNC DATA
+	arg.payload_data.top_id = boost::value_initialized<key>();
+	arg.payload_data.top_version = 0;
+	arg.payload_data.cumulative_difficulty = 1;
+	arg.payload_data.current_height = 0;
+	
+	
+	sendd = (unsigned char *)&arg;
+	int sendd_size = sizeof(arg);
+	
+	sendh.m_signature = LEVIN_SIGNATURE;
+	sendh.m_datal_len = sendd_size;
 	sendh.m_have_to_return_data = true;
-	sendh.m_command = 0;
-	sendh.m_return_code;
-	sendh.m_flags = 0;
-	sendh.m_protocol_version = 0;
+	sendh.m_command = nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::ID;
+	sendh.m_return_code = LEVIN_OK;
+	sendh.m_flags = LEVIN_PACKET_REQUEST;
+	sendh.m_protocol_version = LEVIN_PROTOCOL_VER_1;
+	
+	
+	// Fill characters 
+	std::ostringstream op;
+	std::ostream::fmtflags old_flags = op.flags();  
+	char old_fill  = op.fill(); 
+	op << std::hex << std::setfill('0'); 
+	
+	for (int i = 0; i < sendd_size; i++) 
+	{ 
+	    // Give space between two hex values 
+	    if (i>0) 
+		op << ' '; 
+	    if(i % 8 == 0)
+	      op << "\n";
+	    // force output to use hex version of ascii code 
+	    op << std::setw(2) << static_cast<int>(sendd[i]); 
+	} 
+      
+	op.flags(old_flags); 
+	op.fill(old_fill);
+	
+	std::cout << "DATA LENGTH: " << sendd_size << " : " << std::endl << op.str() << std::endl << std::endl;
 	
 	//PACK HEADER
 	uint8_t *data_p = reinterpret_cast<uint8_t *>(&sendh);
@@ -117,7 +160,7 @@ void peer::send_handshake()
 	}
 	
 	//PACK DATA
-	while(sendv.size() < sizeof(sendh) + sendh.m_datal_len)
+	while(sendv.size() < sizeof(sendh) + sendd_size)
 	{
 		sendv.push_back(sendd[sendv.size() - sizeof(sendh)]);
 	}
