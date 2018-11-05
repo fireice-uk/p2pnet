@@ -27,7 +27,7 @@
 #ifndef _NET_UTILS_BASE_H_
 #define _NET_UTILS_BASE_H_
 
-//#include "../misc_log_ex.h"
+//#include "misc_log_ex.h"
 #include "../serialization/keyvalue_serialization.h"
 #include <boost/asio/io_service.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -183,7 +183,7 @@ class network_address
 	uint8_t get_type_id() const { return self ? self->get_type_id() : 0; }
 	template <typename Type>
 	const Type &as() const { return as_mutable<const Type>(); }
-	
+
 	BEGIN_KV_SERIALIZE_MAP()
 	uint8_t type = is_store ? this_ref.get_type_id() : 0;
 	if(!epee::serialization::selector<is_store>::serialize(type, stg, hparent_section, "type"))
@@ -304,7 +304,6 @@ struct connection_context_base
   private:
 	template <class t_protocol_handler>
 	friend class connection;
-	
 	void set_details(boost::uuids::uuid connection_id, const network_address &remote_address, bool is_income)
 	{
 		this->~connection_context_base();
@@ -335,11 +334,11 @@ struct i_service_endpoint
 std::string print_connection_context(const connection_context_base &ctx);
 std::string print_connection_context_short(const connection_context_base &ctx);
 
-/*inline MAKE_LOGGABLE(connection_context_base, ct, os)
-{
-	os << "[" << epee::net_utils::print_connection_context_short(ct) << "] ";
-	return os;
-}*/
+//inline MAKE_LOGGABLE(connection_context_base, ct, os)
+//{
+	//os << "[" << epee::net_utils::print_connection_context_short(ct) << "] ";
+	//return os;
+//}
 
 #define LOG_ERROR_CC(ct, message) MERROR(ct << message)
 #define LOG_WARNING_CC(ct, message) MWARNING(ct << message)

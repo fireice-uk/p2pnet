@@ -36,7 +36,7 @@
 #ifdef HAVE_EXPLICIT_BZERO
 #include <strings.h>
 #endif
-#include "../include/memwipe.h"
+#include "../memwipe.h"
 
 #if defined(_MSC_VER)
 #define SCARECROW \

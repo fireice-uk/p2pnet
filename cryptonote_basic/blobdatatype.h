@@ -1,4 +1,5 @@
 // Copyright (c) 2018, Ryo Currency Project
+// Portions copyright (c) 2014-2018, The Monero Project
 //
 // Portions of this file are available under BSD-3 license. Please see ORIGINAL-LICENSE for details
 // All rights reserved.
@@ -40,15 +41,14 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-#include "cryptonote_config.h"
+#pragma once
 
-template struct cryptonote::config<cryptonote::MAINNET>;
-template struct cryptonote::config<cryptonote::TESTNET>;
-template struct cryptonote::config<cryptonote::STAGENET>;
+#include <string>
 
-constexpr boost::uuids::uuid cryptonote::config<cryptonote::MAINNET>::NETWORK_ID;
-constexpr boost::uuids::uuid cryptonote::config<cryptonote::TESTNET>::NETWORK_ID;
-constexpr boost::uuids::uuid cryptonote::config<cryptonote::STAGENET>::NETWORK_ID;
-
-constexpr const char* cryptonote::common_config::RYO_DONATION_ADDR;
+namespace cryptonote
+{
+typedef std::string blobdata;
+}

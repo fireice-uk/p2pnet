@@ -32,6 +32,7 @@
 #include <list>
 #include <set>
 #include <vector>
+#include <string>
 //#include "../misc_log_ex.h"
 
 namespace epee
