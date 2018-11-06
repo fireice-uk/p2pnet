@@ -16,6 +16,8 @@
 
 #pragma once
 
+
+#include <boost/uuid/uuid_io.hpp> 
 #include <inttypes.h>
 #include <iostream>
 #include <mutex>
@@ -39,12 +41,12 @@
 #include "epee/storages/portable_storage_template_helper.h"
 #include <boost/uuid/uuid_generators.hpp>
 #include "cryptonote_basic/blobdatatype.h"
+#include "epee/storages/portable_storage_template_helper.h"
 #include "sock.h"
 #include "thdq.hpp"
 
 //Bender's nightmare
 #define LEVIN_OK 0
-#define LEVIN_PACKET_REQUEST 0x00000001
 #define LEVIN_PROTOCOL_VER_1 1
 
 
@@ -103,6 +105,7 @@ protected:
 #pragma pack(pop)
 
 	static constexpr uint64_t LEVIN_SIGNATURE = 0x0101010101012101LL;
+	static constexpr uint8_t LEVIN_PACKET_REQUEST =  0x00000001;
 	//static constexpr uint64_t LEVIN_SIGNATURE = 0x01011101;
 
 	SOCKET peer_fd;
@@ -115,6 +118,6 @@ protected:
 	void send_thread();
 	void recv_thread();
 
-  private:
+  private: 
 };
 #endif /* PEER_H */

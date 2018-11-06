@@ -46,10 +46,13 @@ void peer::recv_thread()
 	constexpr size_t buflen = 256 * 1024;
 	std::unique_ptr<uint8_t[]> buffer(new uint8_t[buflen]);
 	size_t bufpos = 0;
-	proto_header *headptr = nullptr;
+	proto_header headptr;
+	
+	int current_command = 0;
+	size_t current_data_len = 0;
 
-	while(peer_fd != INVALID_SOCKET)
-	{
+ 	while(peer_fd != INVALID_SOCKET)
+	{	
 		int reclen = recv(peer_fd, (char *)buffer.get() + bufpos, buflen - bufpos, 0);
 		std::cout << "RECV: " << reclen << std::endl;
 		bufpos += reclen;
@@ -64,30 +67,98 @@ void peer::recv_thread()
 		}
 		
 		while(bufpos > 0)
-		{
-			if(bufpos >= sizeof(proto_header) && headptr == nullptr)
+		{	
+			if(current_data_len == 0 && bufpos >= sizeof(proto_header))
 			{	
-				
-				headptr = new proto_header;
-				memcpy(headptr, buffer.get(), sizeof(proto_header));
-				std::cout << "DATA LEN: " << headptr->m_datal_len << std::endl;
-
-				memcpy(buffer.get(), buffer.get() + sizeof(proto_header),  (bufpos -= sizeof(proto_header)));
+				//COPY DATA TO HEADER
+				memcpy(&headptr, buffer.get(), sizeof(proto_header));		
+				//DISPATCH HEADER DATA AND COPY WHATS BEHIND TO FRONT OF BUFFER
+				if(bufpos > sizeof(proto_header))
+					memcpy(buffer.get(), buffer.get() + sizeof(proto_header),  (bufpos -= sizeof(proto_header)));
+				else
+					bufpos -= sizeof(proto_header);
+				  
+				current_command = headptr.m_command;
+				current_data_len = headptr.m_datal_len;
 			}
 			
-			if(headptr != nullptr)
+			if(current_data_len != 0 )
 			{	
-				if(bufpos >= headptr->m_datal_len)
+				switch(current_command)
 				{
-					char msg[headptr->m_datal_len+1];
-					memcpy(&msg, buffer.get(), headptr->m_datal_len);
-					msg[headptr->m_datal_len] = '\0';
-					std::cout << "RECEIVED DATA: " << msg << std::endl;
+					case nodetool::COMMAND_REQUEST_SUPPORT_FLAGS::ID:
+						if(bufpos >= current_data_len)
+						{	
+							nodetool::COMMAND_REQUEST_SUPPORT_FLAGS::response res;
+							
+							//COPY DATA TO STRUCT
+							memcpy(&res, buffer.get(), current_data_len);	
+							//DISPATCH STRUCT DATA AND COPY WHATS BEHIND TO FRONT OF BUFFER
+							if(bufpos > current_data_len)
+								memcpy(buffer.get(), buffer.get() + current_data_len,  (bufpos -= current_data_len));
+							else
+								bufpos -= current_data_len;
+							
+							std::cout << "RECEIVED SUPPORT FLAG: " << res.support_flags << std::endl;
+							current_data_len = 0;
+						}
+					break;
 					
-					memcpy(buffer.get(), buffer.get() + headptr->m_datal_len,  (bufpos -= headptr->m_datal_len));
+					case nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::ID:
+						if(bufpos >= current_data_len)
+						{	
+							nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::response res;
+							epee::serialization::portable_storage stg_ret;
+							
+							//COPY BINARY DATA TO BUFFER
+							std::string buff_to_rec((const char*)buffer.get(), current_data_len);
+							
+							//UNSERIALIZE BINARY DATA
+							if(!stg_ret.load_from_binary(buff_to_rec))
+							{
+								std::cout << "FAILED TO LOAD BINARY ON COMMAN: " << current_command << std::endl;
+							}
+							
+							res.load(stg_ret);
+							
+							//DISPATCH STRUCT DATA AND COPY WHATS BEHIND TO FRONT OF BUFFER//COPY DATA TO STRUCT
+							if(bufpos > current_data_len)
+								memcpy(buffer.get(), buffer.get() + current_data_len,  (bufpos -= current_data_len));
+							else
+								bufpos -= current_data_len;
+							
+							std::cout << "RECEIVED HANDSHAKE: " << std::endl;
+							std::cout << "PEER ID: " << res.node_data.peer_id << std::endl;
+							std::cout << "PORT: " << res.node_data.my_port << std::endl;
+							std::cout << "LOCAL TIME: " << res.node_data.local_time << std::endl;
+							std::cout << "NETWORK ID: " << res.node_data.network_id << std::endl;
+							
+							std::cout << "CURRENT HEIGHT: " << res.payload_data.current_height << std::endl;
+							std::cout << "CUM DIFF: " << res.payload_data.cumulative_difficulty << std::endl;
+							std::cout << "TOP ID: " << res.payload_data.top_id.bytes << std::endl;
+							std::cout << "TOP VERSION: " << res.payload_data.top_version << std::endl;
+							
+							
+							std::cout << "LOCAL PEERLIST: " << std::endl;
+							for(auto a: res.local_peerlist_new)
+							{	
+								std::cout << "PEER ID: " << a.id << std::endl;
+								std::cout << "LAST SEEN: " << a.last_seen << std::endl;
+								std::cout << "PEER IP:PORT: " << a.adr.str() << std::endl;
+							}
+							current_data_len = 0;
+						}
+					break;
 					
-					delete headptr;
-					headptr = nullptr;
+					default:
+						if(bufpos >= current_data_len)
+						{	
+							bufpos -= current_data_len;
+							
+							std::cout << "UNKNOWN COMMAND TYPE: " << current_command << " - DISPATCHING " << current_data_len << " OF DATA" << std::endl;
+							current_data_len = 0;
+						}
+					break;
 				}
 			}
 		}
@@ -97,11 +168,15 @@ void peer::recv_thread()
 void peer::send_handshake()
 {
 	proto_header sendh;
-	const unsigned char* sendd;
+	//const unsigned char* sendd;
+	std::string sendd;
 	std::vector<uint8_t> sendv;
 	
 	nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::request arg;
 	//nodetool::COMMAND_HANDSHAKE_T::response rsp;
+	
+	epee::serialization::portable_storage stg;
+	
 	
 	time_t local_time;
 	time(&local_time);
@@ -116,9 +191,10 @@ void peer::send_handshake()
 	arg.payload_data.cumulative_difficulty = 1;
 	arg.payload_data.current_height = 0;
 	
-	
-	sendd = (unsigned char *)&arg;
-	int sendd_size = sizeof(arg);
+	arg.store(stg);
+	stg.store_to_binary(sendd);
+	//sendd = (unsigned char *)&stg;
+	int sendd_size = sendd.length();
 	
 	sendh.m_signature = LEVIN_SIGNATURE;
 	sendh.m_datal_len = sendd_size;
@@ -126,30 +202,8 @@ void peer::send_handshake()
 	sendh.m_command = nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::ID;
 	sendh.m_return_code = LEVIN_OK;
 	sendh.m_flags = LEVIN_PACKET_REQUEST;
-	sendh.m_protocol_version = LEVIN_PROTOCOL_VER_1;
+	sendh.m_protocol_version = LEVIN_PROTOCOL_VER_1;	
 	
-	
-	// Fill characters 
-	std::ostringstream op;
-	std::ostream::fmtflags old_flags = op.flags();  
-	char old_fill  = op.fill(); 
-	op << std::hex << std::setfill('0'); 
-	
-	for (int i = 0; i < sendd_size; i++) 
-	{ 
-	    // Give space between two hex values 
-	    if (i>0) 
-		op << ' '; 
-	    if(i % 8 == 0)
-	      op << "\n";
-	    // force output to use hex version of ascii code 
-	    op << std::setw(2) << static_cast<int>(sendd[i]); 
-	} 
-      
-	op.flags(old_flags); 
-	op.fill(old_fill);
-	
-	std::cout << "DATA LENGTH: " << sendd_size << " : " << std::endl << op.str() << std::endl << std::endl;
 	
 	//PACK HEADER
 	uint8_t *data_p = reinterpret_cast<uint8_t *>(&sendh);

@@ -12,11 +12,14 @@ add_executable(p2pnet epee/src/memwipe.cpp epee/src/hex.cpp epee/src/string_tool
 
 find_package(Threads REQUIRED)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(Boost REQUIRED COMPONENTS regex)
+include_directories(${Boost_INCLUDE_DIRS})
 
 target_link_libraries(p2pnet 
 	Threads::Threads
 	${Boost_FILESYSTEM_LIBRARY}
 	${Boost_SYSTEM_LIBRARY}
+	${Boost_LIBRARIES}
 )
 
 install(TARGETS p2pnet RUNTIME DESTINATION bin)

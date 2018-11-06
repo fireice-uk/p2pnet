@@ -151,7 +151,9 @@ struct COMMAND_HANDSHAKE_T
 					local_peerlist.push_back(peerlist_entry_base<network_address_old>({{ipv4.ip(), ipv4.port()}, p.id, p.last_seen}));
 				}
 				else
-					MDEBUG("Not including in legacy peer list: " << p.adr.str());
+					//MDEBUG("Not including in legacy peer list: " << p.adr.str());
+					//PLACE HOLDERS
+					int i = 0;
 			}
 			epee::serialization::selector<is_store>::serialize_stl_container_pod_val_as_blob(local_peerlist, stg, hparent_section, "local_peerlist");
 		}
@@ -173,4 +175,27 @@ struct COMMAND_HANDSHAKE_T
 /************************************************************************/
 /*                                                                      */
 /************************************************************************/
+struct COMMAND_REQUEST_SUPPORT_FLAGS
+{
+	const static int ID = P2P_COMMANDS_POOL_BASE + 7;
+
+	struct request
+	{
+		BEGIN_KV_SERIALIZE_MAP()
+		END_KV_SERIALIZE_MAP()
+	};
+
+	struct response
+	{
+		uint32_t support_flags;
+
+		BEGIN_KV_SERIALIZE_MAP()
+		KV_SERIALIZE(support_flags)
+		END_KV_SERIALIZE_MAP()
+	};
+};
+/************************************************************************/
+/*                                                                      */
+/************************************************************************/
 }
+

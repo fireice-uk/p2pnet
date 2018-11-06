@@ -197,11 +197,17 @@ class network_address
 			const_cast<network_address &>(this_ref) = ipv4_network_address{0, 0};
 			auto &addr = this_ref.template as_mutable<ipv4_network_address>();
 			if(epee::serialization::selector<is_store>::serialize(addr, stg, hparent_section, "addr"))
-				MDEBUG("Found as addr: " << this_ref.str());
+				//MDEBUG("Found as addr: " << this_ref.str());
+				//PLACE HOLDERS
+				int i = 0;
 			else if(epee::serialization::selector<is_store>::serialize(addr, stg, hparent_section, "template as<ipv4_network_address>()"))
-				MDEBUG("Found as template as<ipv4_network_address>(): " << this_ref.str());
+				//MDEBUG("Found as template as<ipv4_network_address>(): " << this_ref.str());
+				//PLACE HOLDERS
+				int i = 0;
 			else if(epee::serialization::selector<is_store>::serialize(addr, stg, hparent_section, "template as_mutable<ipv4_network_address>()"))
-				MDEBUG("Found as template as_mutable<ipv4_network_address>(): " << this_ref.str());
+				//MDEBUG("Found as template as_mutable<ipv4_network_address>(): " << this_ref.str());
+				//PLACE HOLDERS
+				int i = 0;	
 			else
 			{
 				//MWARNING("Address not found");
