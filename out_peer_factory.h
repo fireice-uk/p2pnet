@@ -31,7 +31,7 @@ static const char *dns_seeds[] = {
 class out_peer_factory
 {
 public:
-	out_peer_factory();
+	out_peer_factory() {};
 
 	void connect_peers(size_t n);
 	void connect_seeds();

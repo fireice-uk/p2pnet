@@ -61,7 +61,7 @@ void peer::recv_thread()
 		{
 			//CONNECTION LOST
 			std::cout << "PEER: " << peer_fd << " DISCONNECTED" << std::endl;
-			::close(peer_fd);
+			close();
 			peer_fd = INVALID_SOCKET;
 			break;
 		}
@@ -80,84 +80,64 @@ void peer::recv_thread()
 				  
 				current_command = headptr.m_command;
 				current_data_len = headptr.m_datal_len;
+				
+				call_map_mutex.lock();
+				if(current_command != call_map.begin()->second.m_command)
+				{
+					//WRONG COMMAND IGNORE FOR NOW 
+					//close();
+				}
+				call_map_mutex.unlock();
 			}
 			
-			if(current_data_len != 0 )
+			if(current_data_len != 0 && bufpos >= current_data_len)
 			{	
 				switch(current_command)
 				{
 					case nodetool::COMMAND_REQUEST_SUPPORT_FLAGS::ID:
-						if(bufpos >= current_data_len)
-						{	
-							nodetool::COMMAND_REQUEST_SUPPORT_FLAGS::response res;
+					{
+						nodetool::COMMAND_REQUEST_SUPPORT_FLAGS::response res;
 							
-							//COPY DATA TO STRUCT
-							memcpy(&res, buffer.get(), current_data_len);	
-							//DISPATCH STRUCT DATA AND COPY WHATS BEHIND TO FRONT OF BUFFER
-							if(bufpos > current_data_len)
-								memcpy(buffer.get(), buffer.get() + current_data_len,  (bufpos -= current_data_len));
-							else
-								bufpos -= current_data_len;
-							
-							std::cout << "RECEIVED SUPPORT FLAG: " << res.support_flags << std::endl;
-							current_data_len = 0;
-						}
+						//COPY DATA TO STRUCT
+						memcpy(&res, buffer.get(), current_data_len);	
+						//DISPATCH STRUCT DATA AND COPY WHATS BEHIND TO FRONT OF BUFFER
+						if(bufpos > current_data_len)
+							memcpy(buffer.get(), buffer.get() + current_data_len,  (bufpos -= current_data_len));
+						else
+							bufpos -= current_data_len;
+						
+						std::cout << "RECEIVED SUPPORT FLAG: " << res.support_flags << std::endl;
+						
+						current_data_len = 0;
+					}
 					break;
 					
 					case nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::ID:
-						if(bufpos >= current_data_len)
-						{	
-							nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::response res;
-							epee::serialization::portable_storage stg_ret;
-							
-							//COPY BINARY DATA TO BUFFER
-							std::string buff_to_rec((const char*)buffer.get(), current_data_len);
-							
-							//UNSERIALIZE BINARY DATA
-							if(!stg_ret.load_from_binary(buff_to_rec))
-							{
-								std::cout << "FAILED TO LOAD BINARY ON COMMAN: " << current_command << std::endl;
-							}
-							
-							res.load(stg_ret);
-							
-							//DISPATCH STRUCT DATA AND COPY WHATS BEHIND TO FRONT OF BUFFER//COPY DATA TO STRUCT
-							if(bufpos > current_data_len)
-								memcpy(buffer.get(), buffer.get() + current_data_len,  (bufpos -= current_data_len));
-							else
-								bufpos -= current_data_len;
-							
-							std::cout << "RECEIVED HANDSHAKE: " << std::endl;
-							std::cout << "PEER ID: " << res.node_data.peer_id << std::endl;
-							std::cout << "PORT: " << res.node_data.my_port << std::endl;
-							std::cout << "LOCAL TIME: " << res.node_data.local_time << std::endl;
-							std::cout << "NETWORK ID: " << res.node_data.network_id << std::endl;
-							
-							std::cout << "CURRENT HEIGHT: " << res.payload_data.current_height << std::endl;
-							std::cout << "CUM DIFF: " << res.payload_data.cumulative_difficulty << std::endl;
-							std::cout << "TOP ID: " << res.payload_data.top_id.bytes << std::endl;
-							std::cout << "TOP VERSION: " << res.payload_data.top_version << std::endl;
-							
-							
-							std::cout << "LOCAL PEERLIST: " << std::endl;
-							for(auto a: res.local_peerlist_new)
-							{	
-								std::cout << "PEER ID: " << a.id << std::endl;
-								std::cout << "LAST SEEN: " << a.last_seen << std::endl;
-								std::cout << "PEER IP:PORT: " << a.adr.str() << std::endl;
-							}
-							current_data_len = 0;
-						}
+					{
+						//COPY BINARY DATA TO BUFFER
+						std::string buff_to_rec((const char*)buffer.get(), current_data_len);
+						
+						call_map_mutex.lock();
+						call_map.begin()->second.promise->set_value(buff_to_rec);
+						call_map.erase(call_map.begin());
+						call_map_mutex.unlock();
+						
+						//DISPATCH STRUCT DATA AND COPY WHATS BEHIND TO FRONT OF BUFFER//COPY DATA TO STRUCT
+						if(bufpos > current_data_len)
+							memcpy(buffer.get(), buffer.get() + current_data_len,  (bufpos -= current_data_len));
+						else
+							bufpos -= current_data_len;
+						
+						current_data_len = 0;
+					}
 					break;
 					
 					default:
-						if(bufpos >= current_data_len)
-						{	
-							bufpos -= current_data_len;
-							
-							std::cout << "UNKNOWN COMMAND TYPE: " << current_command << " - DISPATCHING " << current_data_len << " OF DATA" << std::endl;
-							current_data_len = 0;
-						}
+					{
+						bufpos -= current_data_len;
+						std::cout << "UNKNOWN COMMAND TYPE: " << current_command << " - DISPATCHING " << current_data_len << " OF DATA" << std::endl;
+						current_data_len = 0;
+					}	
 					break;
 				}
 			}
@@ -176,7 +156,6 @@ void peer::send_handshake()
 	//nodetool::COMMAND_HANDSHAKE_T::response rsp;
 	
 	epee::serialization::portable_storage stg;
-	
 	
 	time_t local_time;
 	time(&local_time);
@@ -230,7 +209,67 @@ void peer::close()
 		t_send.join();
 	if(t_recv.joinable())
 		t_recv.join();
+	if(t_invoke.joinable())
+		t_invoke.join();
 	if(peer_fd != INVALID_SOCKET)
 		::close(peer_fd);
 	peer_fd = INVALID_SOCKET;
+}
+
+void peer::do_invoke()
+{	
+	t_invoke = std::thread(&peer::invoke_thread, this);
+}
+
+void peer::invoke_thread()
+{		
+	std::string response;
+	
+	std::promise<std::string>* recv_promise = new std::promise<std::string>;//(call_map.end()->second.promise); 
+	call_id++;
+	call_map_mutex.lock();
+	future_resp fr;
+	fr.m_command = nodetool::COMMAND_HANDSHAKE_T<void>::ID;
+	fr.promise = recv_promise;
+	call_map.insert(call_map.end(), std::pair<int, future_resp>(call_id, fr) );
+	call_map_mutex.unlock();
+	
+	
+	//TODO OTHER COMMANDS
+	send_handshake();
+	
+	std::future<std::string> recv_future = recv_promise->get_future();
+	response = recv_future.get();
+	delete recv_promise;
+	
+	nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::response res;
+	epee::serialization::portable_storage stg_ret;
+	
+	//UNSERIALIZE BINARY DATA
+	if(!stg_ret.load_from_binary(response))
+	{
+		std::cout << "FAILED TO LOAD BINARY ON COMMAND: " << nodetool::COMMAND_HANDSHAKE_T<void>::ID << std::endl;
+	}
+	
+	res.load(stg_ret);
+	
+	std::cout << "RECEIVED HANDSHAKE: " << std::endl;
+	std::cout << "PEER ID: " << res.node_data.peer_id << std::endl;
+	std::cout << "PORT: " << res.node_data.my_port << std::endl;
+	std::cout << "LOCAL TIME: " << res.node_data.local_time << std::endl;
+	std::cout << "NETWORK ID: " << res.node_data.network_id << std::endl;
+	
+	std::cout << "CURRENT HEIGHT: " << res.payload_data.current_height << std::endl;
+	std::cout << "CUM DIFF: " << res.payload_data.cumulative_difficulty << std::endl;
+	std::cout << "TOP ID: " << res.payload_data.top_id.bytes << std::endl;
+	std::cout << "TOP VERSION: " << res.payload_data.top_version << std::endl;
+	
+	
+	std::cout << "LOCAL PEERLIST: " << std::endl;
+	for(auto a: res.local_peerlist_new)
+	{	
+		std::cout << "PEER ID: " << a.id << std::endl;
+		std::cout << "LAST SEEN: " << a.last_seen << std::endl;
+		std::cout << "PEER IP:PORT: " << a.adr.str() << std::endl;
+	}
 }

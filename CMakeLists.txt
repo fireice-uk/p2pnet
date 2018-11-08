@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
-add_executable(p2pnet epee/src/memwipe.cpp epee/src/hex.cpp epee/src/string_tools.cpp epee/src/net_utils_base.cpp peer.cpp out_peer_factory.cpp inc_peer_factory.cpp CMakeLists.txt main.cpp)
+add_executable(p2pnet p2p.cpp epee/src/memwipe.cpp epee/src/hex.cpp epee/src/string_tools.cpp epee/src/net_utils_base.cpp peer.cpp out_peer_factory.cpp inc_peer_factory.cpp CMakeLists.txt main.cpp)
 
 find_package(Threads REQUIRED)
 find_package(Boost COMPONENTS system filesystem REQUIRED)

@@ -34,6 +34,7 @@
 #include <iomanip> 
 #include <string> 
 #include <bitset>
+#include <future>
 #include "p2p/p2p_protocol_defs.h"
 #include "serialization/serialization.h"
 #include "serialization/binary_archive.h"
@@ -84,10 +85,12 @@ struct CORE_SYNC_DATA
 class peer
 {
 public:
+
 	peer(SOCKET peer_fd, const ip_port_addr& addr);
 	void close();
 	void send_data(std::vector<uint8_t> &&data) { sendq.push(std::move(data)); }
 	void send_handshake();
+	void do_invoke();
 
 protected:
 #pragma pack(push)
@@ -102,6 +105,12 @@ protected:
 		uint32_t m_flags;
 		uint32_t m_protocol_version;
 	};
+	
+	struct future_resp
+	{	
+		uint32_t m_command;
+		std::promise<std::string>* promise; 
+	};
 #pragma pack(pop)
 
 	static constexpr uint64_t LEVIN_SIGNATURE = 0x0101010101012101LL;
@@ -112,11 +121,18 @@ protected:
 	ip_port_addr addr;
 	std::thread t_send;
 	std::thread t_recv;
-
+	std::thread t_invoke;
+	
 	thdq<std::vector<uint8_t>> sendq;
+	
+	int call_id = 0;
+	std::map<int, future_resp> call_map;
+	
+	std::mutex call_map_mutex;
 
 	void send_thread();
 	void recv_thread();
+	void invoke_thread();
 
   private: 
 };

@@ -63,7 +63,7 @@ int main()
 	std::cin >> port2;
 	
 	out_peer_factory outfac;
-	outfac.connect_peers(1);
+	//outfac.connect_peers(1);
 	
 	sleep(0.5f);
 	std::cin.ignore(1024, '\n');

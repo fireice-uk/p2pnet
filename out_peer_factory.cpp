@@ -17,11 +17,6 @@
 #include <algorithm>
 #include <future>
 
-out_peer_factory::out_peer_factory()
-{
-	//CHECK FOR ERROR
-}
-
 out_peer_factory::sock_data* out_peer_factory::connect_dns(sock_data &out, const char *full_addr)
 {
 	const char* delim = strrchr(full_addr, ':');
@@ -161,7 +156,7 @@ void out_peer_factory::connect_peers(size_t n)
 	sock_data s;
 	connect_dns(s, "127.0.0.1:12210");
 	if(s.sock != INVALID_SOCKET)
-	{
+	{	
 		peers.emplace_back(s.sock, s.addr);
 		peers.back().send_handshake();
 	}
