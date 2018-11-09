@@ -89,8 +89,18 @@ public:
 	peer(SOCKET peer_fd, const ip_port_addr& addr);
 	void close();
 	void send_data(std::vector<uint8_t> &&data) { sendq.push(std::move(data)); }
+	
 	void send_handshake();
-	void do_invoke();
+	void receive_handshake(std::string req);
+	
+	void send_support_flags_request();
+	void receive_support_flag_request(std::string req);
+	
+	void do_invoke(int command /*TEMPORARY*/);
+	void get_invoke(int command, std::string req);
+	
+	void do_notify(int command, std::string req);
+	void get_notify(std::string req);
 
 protected:
 #pragma pack(push)
@@ -105,34 +115,34 @@ protected:
 		uint32_t m_flags;
 		uint32_t m_protocol_version;
 	};
-	
-	struct future_resp
-	{	
-		uint32_t m_command;
-		std::promise<std::string>* promise; 
-	};
 #pragma pack(pop)
+	
+	struct promise_resp
+	{	
+		promise_resp(uint32_t _command) : m_command(_command) {};
+		uint32_t m_command;
+		std::promise<std::string> prom; 
+	};
 
 	static constexpr uint64_t LEVIN_SIGNATURE = 0x0101010101012101LL;
-	static constexpr uint8_t LEVIN_PACKET_REQUEST =  0x00000001;
+	static constexpr uint32_t LEVIN_PACKET_REQUEST =  0x00000001;
+	static constexpr uint32_t LEVIN_PACKET_RESPONSE = 0x00000002;
 	//static constexpr uint64_t LEVIN_SIGNATURE = 0x01011101;
 
 	SOCKET peer_fd;
 	ip_port_addr addr;
 	std::thread t_send;
 	std::thread t_recv;
-	std::thread t_invoke;
 	
 	thdq<std::vector<uint8_t>> sendq;
 	
 	int call_id = 0;
-	std::map<int, future_resp> call_map;
+	std::map<int, promise_resp*> call_map;
 	
 	std::mutex call_map_mutex;
 
 	void send_thread();
 	void recv_thread();
-	void invoke_thread();
 
   private: 
 };

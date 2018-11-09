@@ -25,7 +25,8 @@ class p2p
 			return inst;
 		}
 		
-		void invoke();
+		void do_invoke();
+		void close();
 		
 	protected:
 		

@@ -158,7 +158,8 @@ void out_peer_factory::connect_peers(size_t n)
 	if(s.sock != INVALID_SOCKET)
 	{	
 		peers.emplace_back(s.sock, s.addr);
-		peers.back().send_handshake();
+		peers.back().do_invoke(nodetool::COMMAND_HANDSHAKE_T<void>::ID);
+		peers.back().do_invoke(nodetool::COMMAND_REQUEST_SUPPORT_FLAGS::ID);
 	}
 }
 
