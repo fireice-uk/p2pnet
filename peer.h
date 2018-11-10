@@ -35,6 +35,7 @@
 #include <string> 
 #include <bitset>
 #include <future>
+#include <unordered_map>
 #include "p2p/p2p_protocol_defs.h"
 #include "serialization/serialization.h"
 #include "serialization/binary_archive.h"
@@ -82,6 +83,7 @@ struct CORE_SYNC_DATA
 };
 
 
+
 class peer
 {
 public:
@@ -90,18 +92,69 @@ public:
 	void close();
 	void send_data(std::vector<uint8_t> &&data) { sendq.push(std::move(data)); }
 	
-	void send_handshake();
-	void receive_handshake(std::string req);
+	void do_handshake(const nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::request& req, nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::response& rsp);
+	
+	//todo: try to think of making the name variable
+	void on_invoke(const nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::request& req, nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::response& rsp);
 	
 	void send_support_flags_request();
 	void receive_support_flag_request(std::string req);
-	
-	void do_invoke(int command /*TEMPORARY*/);
-	void get_invoke(int command, std::string req);
-	
-	void do_notify(int command, std::string req);
-	void get_notify(std::string req);
 
+	std::string do_invoke(uint32_t command, const std::string& req, uint64_t timeout);
+	std::string on_invoke(uint32_t command, const std::string& req);
+
+	void do_notify(uint32_t command, const std::string& req);
+	void on_notify(uint32_t command, const std::string& req);
+
+	template<class T>
+	inline bool do_invoke(const typename T::request& req, typename T::response& rsp, uint64_t timeout = 60)
+	{
+		std::string out;
+		epee::serialization::portable_storage sreq;
+
+		req.store(sreq);
+		sreq.store_to_binary(out);
+
+		std::string ret = do_invoke(T::ID, out, timeout);
+
+		if(ret.size() == 0)
+			return false;
+
+		epee::serialization::portable_storage sresp;
+		if(!sresp.load_from_binary(ret))
+			return false;
+
+		rsp.load(sresp);
+		return true;
+	};
+	
+	template<class T>
+	inline std::string on_invoke(const std::string& req)
+	{
+		typename T::request req_;
+		typename T::response rsp_;
+
+		epee::serialization::portable_storage sreq;
+		if(!sreq.load_from_binary(req))
+			return "";
+
+		on_invoke(req_, rsp_);
+
+		epee::serialization::portable_storage sres;
+		std::string out;
+		rsp_.store(sres);
+		sreq.store_to_binary(out);
+		return out;
+	};
+
+	static const std::unordered_map<uint32_t, std::function<std::string(peer*, const std::string&)>>& on_invoke_map()
+	{
+		static const std::unordered_map<uint32_t, std::function<std::string(peer*, const std::string&)>> invoke_map = {
+			{ nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::ID, std::bind(&peer::on_invoke<nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>>, std::placeholders::_1, std::placeholders::_2) }
+		};
+		return invoke_map;
+	}
+	
 protected:
 #pragma pack(push)
 #pragma pack(1)
@@ -136,8 +189,8 @@ protected:
 	
 	thdq<std::vector<uint8_t>> sendq;
 	
-	int call_id = 0;
-	std::map<int, promise_resp*> call_map;
+	uint64_t call_id = 0;
+	std::map<uint64_t, promise_resp*> call_map;
 	
 	std::mutex call_map_mutex;
 

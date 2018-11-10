@@ -25,7 +25,7 @@ class p2p
 			return inst;
 		}
 		
-		void do_invoke();
+		void do_invoke(); // ??? Please use meaningful names
 		void close();
 		
 	protected:

@@ -370,76 +370,40 @@ void peer::close()
 	peer_fd = INVALID_SOCKET;
 }
 
-void peer::do_invoke(int command)
-{	
-	std::string response;
-	std::promise<std::string> prom;
-	std::future<std::string> future_resp;
-	epee::serialization::portable_storage stg_ret;
-	
-	call_id++;
-		
-	promise_resp pr(command);
-	call_map_mutex.lock();
-	call_map.insert(call_map.end(), std::pair<int, promise_resp*>(call_id, &pr) );
-	future_resp = call_map.rbegin()->second->prom.get_future();
-	call_map_mutex.unlock();
-	
-	if(command == nodetool::COMMAND_HANDSHAKE_T<void>::ID)
-	{	
-		std::cout << "INVOKING COMMAND HANDSHAKE" << std::endl;
-		nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::response res;
-	  
-		send_handshake();
-		
-		response = future_resp.get();
-		
-		//UNSERIALIZE BINARY DATA
-		if(!stg_ret.load_from_binary(response))
-		{
-			std::cout << "FAILED TO LOAD BINARY ON COMMAND: " << command << std::endl;
-			return;
-		}
-		
-		res.load(stg_ret);
-		
-		std::cout << "PEER ID: " << res.node_data.peer_id << std::endl;
-		std::cout << "PORT: " << res.node_data.my_port << std::endl;
-		std::cout << "LOCAL TIME: " << res.node_data.local_time << std::endl;
-		std::cout << "NETWORK ID: " << res.node_data.network_id << std::endl;
-		
-		std::cout << "CURRENT HEIGHT: " << res.payload_data.current_height << std::endl;
-		std::cout << "CUM DIFF: " << res.payload_data.cumulative_difficulty << std::endl;
-		std::cout << "TOP ID: " << res.payload_data.top_id.bytes << std::endl;
-		std::cout << "TOP VERSION: " << res.payload_data.top_version << std::endl;
-		
-		
-		std::cout << "LOCAL PEERLIST: " << std::endl;
-		for(auto a: res.local_peerlist_new)
-		{	
-			//std::cout << "PEER ID: " << a.id << std::endl;
-			//std::cout << "LAST SEEN: " << a.last_seen << std::endl;
-			//std::cout << "PEER IP:PORT: " << a.adr.str() << std::endl;
-		}
-	}
-	else if(command == nodetool::COMMAND_REQUEST_SUPPORT_FLAGS::ID)
+std::string peer::do_invoke(uint32_t command, const std::string& req, uint64_t timeout)
+{
+	promise_resp promise(command);
+	std::future<std::string> retval = promise.prom.get_future();
+	uint64_t my_call_id;
+
+	std::unique_lock<std::mutex> lock(call_map_mutex);
+	my_call_id = call_id++;
+	call_map.insert(call_map.end(),{ call_id, &promise });
+	lock.unlock();
+
+	proto_header sendh;
+	sendh.m_signature = LEVIN_SIGNATURE;
+	sendh.m_datal_len = req.size();
+	sendh.m_have_to_return_data = true;
+	sendh.m_command = command;
+	sendh.m_return_code = LEVIN_OK;
+	sendh.m_flags = LEVIN_PACKET_REQUEST;
+	sendh.m_protocol_version = LEVIN_PROTOCOL_VER_1;
+
+	std::vector<uint8_t> out;
+	out.resize(sizeof(proto_header) + req.size());
+	memcpy(out.data(), &sendh, sizeof(proto_header));
+	memcpy(out.data() + sizeof(proto_header), req.data(), req.size());
+	send_data(std::move(out));
+
+	if(retval.wait_for(std::chrono::seconds(timeout)) != std::future_status::ready)
 	{
-		std::cout << "INVOKING COMMAND REQUEST SUPPORT FLAGS" << std::endl;
-		nodetool::COMMAND_REQUEST_SUPPORT_FLAGS::response res;
-	  
-		send_support_flags_request();
-		
-		response = future_resp.get();
-		
-		//UNSERIALIZE BINARY DATA
-		if(!stg_ret.load_from_binary(response))
-		{
-			std::cout << "FAILED TO LOAD BINARY ON COMMAND: " << command << std::endl;
-			return;
-		}
-		res.load(stg_ret);
-		std::cout << "RECEIVED RESPONSE SUPPORT FLAGS: " << res.support_flags << std::endl;
+		std::lock_guard<std::mutex> lock2(call_map_mutex);
+		call_map.erase(my_call_id);
+		return "";
 	}
+	else
+		return retval.get();
 }
 
 void peer::do_notify(int command, std::string req)
