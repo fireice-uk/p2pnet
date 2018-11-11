@@ -93,15 +93,12 @@ public:
 	void send_data(std::vector<uint8_t> &&data) { sendq.push(std::move(data)); }
 	
 	void do_handshake(const nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::request& req, nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::response& rsp);
-	
-	//todo: try to think of making the name variable
-	void on_invoke(const nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::request& req, nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::response& rsp);
+	void on_handshake(const nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::request& req, nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::response& rsp);
 	
 	void send_support_flags_request();
 	void receive_support_flag_request(std::string req);
 
 	std::string do_invoke(uint32_t command, const std::string& req, uint64_t timeout);
-	std::string on_invoke(uint32_t command, const std::string& req);
 
 	void do_notify(uint32_t command, const std::string& req);
 	void on_notify(uint32_t command, const std::string& req);
@@ -129,7 +126,7 @@ public:
 	};
 	
 	template<class T>
-	inline std::string on_invoke(const std::string& req)
+	inline std::string on_invoke(void (peer::*on_invoke_fun)(const typename T::request&, typename T::response&), const std::string& req)
 	{
 		typename T::request req_;
 		typename T::response rsp_;
@@ -138,7 +135,7 @@ public:
 		if(!sreq.load_from_binary(req))
 			return "";
 
-		on_invoke(req_, rsp_);
+		(this->*on_invoke_fun)(req_, rsp_);
 
 		epee::serialization::portable_storage sres;
 		std::string out;
@@ -150,8 +147,9 @@ public:
 	static const std::unordered_map<uint32_t, std::function<std::string(peer*, const std::string&)>>& on_invoke_map()
 	{
 		static const std::unordered_map<uint32_t, std::function<std::string(peer*, const std::string&)>> invoke_map = {
-			{ nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::ID, std::bind(&peer::on_invoke<nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>>, std::placeholders::_1, std::placeholders::_2) }
+			{ nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>::ID, std::bind(&peer::on_invoke<nodetool::COMMAND_HANDSHAKE_T<CORE_SYNC_DATA>>, std::placeholders::_1, &peer::on_handshake, std::placeholders::_2) }
 		};
+
 		return invoke_map;
 	}
 	
